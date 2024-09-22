@@ -68,17 +68,7 @@ end
 
 -- Try first parser, and if that fails, try the second parser
 function M.either(c1, c2)
-  return function(parser)
-    local result = parser:run(c1)
-    if result.parser:succeeded() then
-      return result
-    end
-    local result2 = parser:run(c2)
-    if result2.parser:succeeded() then
-      return result2
-    end
-    return noMatch(parser, "neither parser found a match")
-  end
+  return M.any(c1, c2)
 end
 
 -- Parse any number

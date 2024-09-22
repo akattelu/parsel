@@ -43,7 +43,7 @@ function TestEither()
   assertTok(result, "second", 1, 7)
 
   result = parsel.parse("somethingelse", matchFirstOrSecond)
-  assertErrContains(result, "neither parser found a match")
+  assertErrContains(result, "no parser matched somethingelse at position 1")
 end
 
 function TestNumber()
