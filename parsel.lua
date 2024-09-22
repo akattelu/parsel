@@ -171,7 +171,4 @@ function M.seq(...)
   end
 end
 
-M.token = Token
-M.parser = Parser
-
 return M

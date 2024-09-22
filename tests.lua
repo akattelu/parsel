@@ -11,12 +11,15 @@ local function assertTokens(actual, toks)
   for i, actualTok in ipairs(actual.tokens) do
     lu.assertEquals(actualTok.match, toks[i])
   end
+  lu.assertEquals(#actual.tokens, #toks)
 end
 
 local function assertTok(actual, match, startPos, endPos)
   lu.assertNil(actual.parser.error)
   if startPos and endPos then
-    lu.assertEquals(actual.token, parsel.token.new(match, startPos, endPos))
+    lu.assertEquals(actual.token.match, match)
+    lu.assertEquals(actual.token.startPos, startPos)
+    lu.assertEquals(actual.token.endPos, endPos)
   else
     lu.assertEquals(actual.token.match, match)
   end
@@ -84,19 +87,10 @@ end
 function TestOneOrMore()
   local matchAlphaWord = parsel.oneOrMore(parsel.letter())
   local result = parsel.parse("ident", matchAlphaWord)
-  lu.assertNil(result.parser.error)
-  lu.assertEquals(result.tokens[1].match, "i")
-  lu.assertEquals(result.tokens[2].match, "d")
-  lu.assertEquals(result.tokens[3].match, "e")
-  lu.assertEquals(result.tokens[4].match, "n")
-  lu.assertEquals(result.tokens[5].match, "t")
-  lu.assertEquals(#result.tokens, 5)
+  assertTokens(result, { "i", "d", "e", "n", "t" })
 
   result = parsel.parse("i23", matchAlphaWord)
-  lu.assertNil(result.parser.error)
-  lu.assertEquals(result.tokens[1].match, "i")
-  lu.assertEquals(#result.tokens, 1)
-
+  assertTokens(result, { "i" })
 
   result = parsel.parse("234", matchAlphaWord)
   assertErrContains(result,
