@@ -116,4 +116,16 @@ function TestSeq()
   lu.assertEquals(result.parser.pos, 4)
 end
 
+function TestZeroOrMore()
+  local matchAlphaWord = parsel.zeroOrMore(parsel.letter())
+  local result = parsel.parse("ident", matchAlphaWord)
+  assertTokens(result, { "i", "d", "e", "n", "t" })
+
+  result = parsel.parse("i23", matchAlphaWord)
+  assertTokens(result, { "i" })
+
+  result = parsel.parse("234", matchAlphaWord)
+  assertTokens(result, {})
+end
+
 os.exit(lu.LuaUnit.run())

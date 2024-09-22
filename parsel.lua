@@ -171,4 +171,31 @@ function M.seq(...)
   end
 end
 
+-- Parse zero or more instances of combinators
+function M.zeroOrMore(c)
+  return function(parser)
+    local result = parser:run(c)
+    if result.parser:succeeded() then
+      local current
+      local next = result
+      local tokens = {}
+      repeat
+        current = next
+        table.insert(tokens, current.token)
+        next = current.parser:run(c)
+      until not next.parser:succeeded()
+      return {
+        tokens = tokens,
+        parser = current.parser
+      }
+    else
+      -- zero matches
+      return {
+        tokens = {},
+        parser = parser
+      }
+    end
+  end
+end
+
 return M
