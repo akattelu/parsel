@@ -37,6 +37,9 @@ Parser = {
       end,
       succeeded = function(self)
         return not self.error
+      end,
+      inBounds = function(self)
+        return self.pos <= #self.input
       end
     }
   end,
@@ -51,6 +54,7 @@ end
 -- Parse any string literal
 function M.literal(lit)
   return function(parser)
+    if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local match = string.sub(parser.input, parser.pos, parser.pos + #lit - 1)
     if lit == match then
       return {
@@ -88,6 +92,7 @@ end
 -- Parse any alphabetic letter
 function M.letter()
   return function(parser)
+    if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local matched = string.match(string.sub(parser.input, parser.pos, parser.pos + 1), "%a")
     if matched then
       return {
@@ -97,6 +102,47 @@ function M.letter()
     end
     return noMatch(parser,
       string.format("%s did not contain an alphabetic letter at position %d", parser.input, parser.pos))
+  end
+end
+
+-- Parse any digit
+function M.digit()
+  return function(parser)
+    if not parser:inBounds() then return noMatch(parser, "out of bounds") end
+    local matched = string.match(string.sub(parser.input, parser.pos, parser.pos + 1), "%d")
+    if matched then
+      return {
+        token = Token.new(matched, parser.pos, parser.pos + 1),
+        parser = parser:advance(1)
+      }
+    end
+    return noMatch(parser,
+      string.format("%s did not contain a digit at position %d", parser.input, parser.pos))
+  end
+end
+
+-- Parse a combinator at least one time and until the parse fails
+function M.oneOrMore(c)
+  return function(parser)
+    local result = parser:run(c)
+    if result.parser:succeeded() then
+      local current
+      local next = result
+      local tokens = {}
+      repeat
+        current = next
+        table.insert(tokens, current.token)
+        next = current.parser:run(c)
+      until not next.parser:succeeded()
+      return {
+        tokens = tokens,
+        parser = current.parser
+      }
+    else
+      return noMatch(result.parser,
+        string.format("could not match %s at least once at position %d: %s", result.parser.input, result.parser.pos,
+          result.parser.error))
+    end
   end
 end
 

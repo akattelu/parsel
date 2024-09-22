@@ -23,6 +23,9 @@ function TestStringLiteral()
 
   local shouldFail = parsel.parse("otherstring", matchTestLiteral)
   assertErrContains(shouldFail, "otherstring did not contain test at position 1")
+
+  result = parsel.parse("", matchTestLiteral)
+  assertErrContains(result, "out of bounds")
 end
 
 function TestEither()
@@ -55,6 +58,43 @@ function TestLetter()
 
   result = parsel.parse("123", matchAlpha)
   assertErrContains(result, "123 did not contain an alphabetic letter at position 1")
+
+  result = parsel.parse("", matchAlpha)
+  assertErrContains(result, "out of bounds")
+end
+
+function TestDigit()
+  local matchDigit = parsel.digit()
+  local result = parsel.parse("123abc", matchDigit)
+  assertTok(result, "1", 1, 2)
+
+  result = parsel.parse("abc123", matchDigit)
+  assertErrContains(result, "abc123 did not contain a digit at position 1")
+
+  result = parsel.parse("", matchDigit)
+  assertErrContains(result, "out of bounds")
+end
+
+function TestOneOrMore()
+  local matchAlphaWord = parsel.oneOrMore(parsel.letter())
+  local result = parsel.parse("ident", matchAlphaWord)
+  lu.assertNil(result.parser.error)
+  lu.assertEquals(result.tokens[1].match, "i")
+  lu.assertEquals(result.tokens[2].match, "d")
+  lu.assertEquals(result.tokens[3].match, "e")
+  lu.assertEquals(result.tokens[4].match, "n")
+  lu.assertEquals(result.tokens[5].match, "t")
+  lu.assertEquals(#result.tokens, 5)
+
+  result = parsel.parse("i23", matchAlphaWord)
+  lu.assertNil(result.parser.error)
+  lu.assertEquals(result.tokens[1].match, "i")
+  lu.assertEquals(#result.tokens, 1)
+
+
+  result = parsel.parse("234", matchAlphaWord)
+  assertErrContains(result,
+    "could not match 234 at least once at position 1: 234 did not contain an alphabetic letter at position 1")
 end
 
 os.exit(lu.LuaUnit.run())
