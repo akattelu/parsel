@@ -97,4 +97,16 @@ function TestOneOrMore()
     "could not match 234 at least once at position 1: 234 did not contain an alphabetic letter at position 1")
 end
 
+function TestAny()
+  local matchABC = parsel.any(parsel.literal("a"), parsel.literal("b"), parsel.literal("c"))
+  local result = parsel.parse("a", matchABC)
+  assertTok(result, "a")
+  result = parsel.parse("b", matchABC)
+  assertTok(result, "b")
+  result = parsel.parse("c", matchABC)
+  assertTok(result, "c")
+  result = parsel.parse("d", matchABC)
+  assertErrContains(result, "no parser matched d at position 1")
+end
+
 os.exit(lu.LuaUnit.run())

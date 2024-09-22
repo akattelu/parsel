@@ -146,6 +146,20 @@ function M.oneOrMore(c)
   end
 end
 
+-- Parse any combinators specified in the list
+function M.any(...)
+  local combinators = table.pack(...)
+  return function(parser)
+    for _, c in ipairs(combinators) do
+      local result = parser:run(c)
+      if result.parser:succeeded() then
+        return result
+      end
+    end
+    return noMatch(parser, string.format("no parser matched %s at position %d", parser.input, parser.pos))
+  end
+end
+
 M.token = Token
 M.parser = Parser
 
