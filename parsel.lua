@@ -160,6 +160,27 @@ function M.any(...)
   end
 end
 
+-- Parse all combinators in sequence
+function M.seq(...)
+  local combinators = table.pack(...)
+
+  return function(parser)
+    local tokens = {}
+    local result = { parser = parser }
+    for _, c in ipairs(combinators) do
+      result = result.parser:run(c)
+      if not result.parser:succeeded() then
+        return noMatch(result.parser, result.parser.error)
+      end
+      table.insert(tokens, result.token)
+    end
+    return {
+      tokens = tokens,
+      parser = result.parser
+    }
+  end
+end
+
 M.token = Token
 M.parser = Parser
 

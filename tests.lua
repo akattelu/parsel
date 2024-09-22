@@ -6,6 +6,12 @@ local function assertErrContains(result, err)
   lu.assertNil(result.tok)
 end
 
+local function assertTokens(actual, toks)
+  lu.assertNil(actual.parser.error)
+  for i, actualTok in ipairs(actual.tokens) do
+    lu.assertEquals(actualTok.match, toks[i])
+  end
+end
 
 local function assertTok(actual, match, startPos, endPos)
   lu.assertNil(actual.parser.error)
@@ -107,6 +113,13 @@ function TestAny()
   assertTok(result, "c")
   result = parsel.parse("d", matchABC)
   assertErrContains(result, "no parser matched d at position 1")
+end
+
+function TestSeq()
+  local matchABC = parsel.seq(parsel.literal("a"), parsel.literal("b"), parsel.literal("c"))
+  local result = parsel.parse("abcd", matchABC)
+  assertTokens(result, { "a", "b", "c" })
+  lu.assertEquals(result.parser.pos, 4)
 end
 
 os.exit(lu.LuaUnit.run())
