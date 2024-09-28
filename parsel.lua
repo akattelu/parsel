@@ -34,6 +34,7 @@ local function printTable(t)
     sub_printTable(t, "  ")
   end
 end
+
 local function noMatch(parser, error)
   return {
     token = nil,
@@ -52,7 +53,7 @@ local Token = {
   end
 }
 
-local function dlog(msg)
+function dlog(msg)
   if os.getenv("DEBUG") == "1" then
     if type(msg) == "table" then
       printTable(msg)
@@ -61,6 +62,8 @@ local function dlog(msg)
     end
   end
 end
+
+M.dlog = dlog
 
 local function insertToken(t, result)
   if result.tokens then
@@ -240,17 +243,20 @@ function M.seq(...)
 
   return function(parser)
     local tokens = {}
-    local result = { parser = parser }
+    local results = {}
+    local current = { parser = parser }
     for _, c in ipairs(combinators) do
-      result = result.parser:run(c)
-      if not result.parser:succeeded() then
-        return noMatch(result.parser, result.parser.error)
+      current = current.parser:run(c)
+      if not current.parser:succeeded() then
+        return noMatch(current.parser, current.parser.error)
       end
-      insertToken(tokens, result)
+      insertToken(tokens, current)
+      table.insert(results, current.result)
     end
     return {
       tokens = tokens,
-      parser = result.parser
+      parser = current.parser,
+      result = results
     }
   end
 end

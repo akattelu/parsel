@@ -143,6 +143,7 @@ function TestSeq()
   local matchABC = parsel.seq(parsel.literal("a"), parsel.literal("b"), parsel.literal("c"))
   local result = parsel.parse("abcd", matchABC)
   assertTokens(result, { "a", "b", "c" })
+  assertResult(result, { "a", "b", "c" })
   lu.assertEquals(result.parser.pos, 4)
 
   local matchLettersThenDigits = parsel.seq(parsel.literal("$"),
@@ -154,6 +155,10 @@ function TestSeq()
   for i, tok in ipairs(subTokens) do
     lu.assertEquals(tok.match, expected[i])
   end
+
+  local parsed = parsel.parse("$12.34",
+    parsel.map(matchLettersThenDigits, function(results) return tonumber(table.concat(results[2], "")) end))
+  assertResult(parsed, 12.34)
 end
 
 function TestZeroOrMore()
