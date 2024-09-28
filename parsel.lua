@@ -43,6 +43,8 @@ local function noMatch(parser, error)
   }
 end
 
+M.nullResult = { type = "NULL" }
+
 local Token = {
   new = function(match, startPos, endPos)
     return {
@@ -53,7 +55,7 @@ local Token = {
   end
 }
 
-function dlog(msg)
+local function dlog(msg)
   if os.getenv("DEBUG") == "1" then
     if type(msg) == "table" then
       printTable(msg)
@@ -218,7 +220,9 @@ end
 function M.map(parserFn, mapFn)
   return function(parser)
     local after = parserFn(parser)
-    after.result = mapFn(after.result)
+    if after.parser:succeeded() then
+      after.result = mapFn(after.result)
+    end
     return after
   end
 end
@@ -287,6 +291,22 @@ function M.zeroOrMore(c)
         tokens = {},
         parser = parser,
         result = {}
+      }
+    end
+  end
+end
+
+-- Optionally parse a combinator, return parsel.nullResult() if not matched
+function M.optional(c)
+  return function(parser)
+    local result = parser:run(c)
+    if result.parser:succeeded() then
+      return result
+    else
+      return {
+        token = M.nullResult,
+        parser = parser,
+        result = M.nullResult,
       }
     end
   end

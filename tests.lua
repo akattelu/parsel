@@ -14,7 +14,11 @@ end
 local function assertTokens(actual, toks)
   lu.assertNil(actual.parser.error)
   for i, actualTok in ipairs(actual.tokens) do
-    lu.assertEquals(actualTok.match, toks[i])
+    if actualTok == parsel.nullResult then
+      lu.assertEquals(actualTok, toks[i])
+    else
+      lu.assertEquals(actualTok.match, toks[i])
+    end
   end
   lu.assertEquals(#actual.tokens, #toks)
 end
@@ -35,6 +39,11 @@ function TestStringLiteral()
   local parsed = parsel.parse("teststring", matchTestLiteral)
   assertTok(parsed, "test")
   assertResult(parsed, "test")
+
+  local matchTestEqual = parsel.literal("=")
+  parsed = parsel.parse("===", matchTestEqual)
+  assertTok(parsed, "=")
+  assertResult(parsed, "=")
 
   local shouldFail = parsel.parse("otherstring", matchTestLiteral)
   assertErrContains(shouldFail, "otherstring did not contain test at position 1")
@@ -159,6 +168,18 @@ function TestSeq()
   local parsed = parsel.parse("$12.34",
     parsel.map(matchLettersThenDigits, function(results) return tonumber(table.concat(results[2], "")) end))
   assertResult(parsed, 12.34)
+
+  local identParser = parsel.map(
+    parsel.seq(parsel.letter(), parsel.zeroOrMore(parsel.either(parsel.letter(), parsel.digit()))), function(tokens)
+      return {
+        type = "ident",
+        value = tokens[1] .. table.concat(tokens[2], "")
+      }
+    end)
+  assertResult(parsel.parse('local identifier234', identParser), {
+    type = "ident",
+    value = "identifier123"
+  })
 end
 
 function TestZeroOrMore()
@@ -176,6 +197,17 @@ function TestZeroOrMore()
   local mapJoin = parsel.map(matchAlphaWord, function(tokens) return table.concat(tokens, "") end)
   local parsed = parsel.parse("ident", mapJoin)
   assertResult(parsed, "ident")
+end
+
+function TestOptional()
+  local matchOptionalDigit = parsel.seq(parsel.letter(), parsel.optional(parsel.digit()), parsel.letter())
+  local parsed = parsel.parse("a1b", matchOptionalDigit)
+  assertTokens(parsed, { "a", "1", "b" })
+  assertResult(parsed, { "a", "1", "b" })
+
+  parsed = parsel.parse("ab", matchOptionalDigit)
+  assertTokens(parsed, { "a", parsel.nullResult, "b" })
+  assertResult(parsed, { "a", parsel.nullResult, "b" })
 end
 
 os.exit(lu.LuaUnit.run())
