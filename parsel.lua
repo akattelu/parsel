@@ -53,8 +53,13 @@ Parser = {
       input = input,
       pos = pos or 1,
       error = error or nil,
+      resultMapFn = nil,
+      map = function(self, fn)
+        self.resultMapFn = fn
+        return self
+      end,
       advance = function(self, amt)
-        return Parser.new(self.input, self.pos + amt)
+        return Parser.new(self.input, self.pos + amt, self.error)
       end,
       withError = function(self, err)
         return Parser.new(self.input, self.pos, err)
@@ -81,6 +86,9 @@ function M.parse(input, combinator)
   return p:run(combinator)
 end
 
+local function identity(match)
+  return match
+end
 -- Parse any string literal
 function M.literal(lit)
   return function(parser)
@@ -110,14 +118,16 @@ function M.number(value)
 end
 
 -- Parse any alphabetic letter
-function M.letter()
+function M.letter(mapFn)
+  mapFn = mapFn or identity
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local matched = string.match(string.sub(parser.input, parser.pos, parser.pos + 1), "%a")
     if matched then
       return {
         token = Token.new(matched, parser.pos, parser.pos + 1),
-        parser = parser:advance(1)
+        parser = parser:advance(1),
+        result = mapFn(matched)
       }
     end
     return noMatch(parser,

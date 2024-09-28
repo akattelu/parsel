@@ -1,6 +1,11 @@
 local lu = require 'luaunit'
 local parsel = require 'parsel'
 
+local function assertResult(parsed, actual)
+  lu.assertEquals(parsed.result, actual)
+  lu.assertNil(parsed.parser.error)
+end
+
 local function assertErrContains(result, err)
   lu.assertStrContains(result.parser.error, err)
   lu.assertNil(result.tok)
@@ -62,14 +67,19 @@ end
 
 function TestLetter()
   local matchAlpha = parsel.letter()
-  local result = parsel.parse("abc", matchAlpha)
-  assertTok(result, "a", 1, 2)
+  local parsed = parsel.parse("abc", matchAlpha)
+  assertTok(parsed, "a", 1, 2)
+  assertResult(parsed, "a")
 
-  result = parsel.parse("123", matchAlpha)
-  assertErrContains(result, "123 did not contain an alphabetic letter at position 1")
+  parsed = parsel.parse("123", matchAlpha)
+  assertErrContains(parsed, "123 did not contain an alphabetic letter at position 1")
 
-  result = parsel.parse("", matchAlpha)
-  assertErrContains(result, "out of bounds")
+  parsed = parsel.parse("", matchAlpha)
+  assertErrContains(parsed, "out of bounds")
+
+  local matchAlphaMapNode = parsel.letter(function(letter) return { type = "letter", value = string.upper(letter) } end)
+  parsed = parsel.parse("a", matchAlphaMapNode)
+  assertResult(parsed, { type = "letter", value = "A" })
 end
 
 function TestDigit()
