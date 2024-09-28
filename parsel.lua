@@ -1,9 +1,44 @@
 local M = {}
 
+local function printTable(t)
+  local printTable_cache = {}
+
+  local function sub_printTable(t2, indent)
+    if (printTable_cache[tostring(t2)]) then
+      print(indent .. "*" .. tostring(t2))
+    else
+      printTable_cache[tostring(t2)] = true
+      if (type(t2) == "table") then
+        for pos, val in pairs(t2) do
+          if (type(val) == "table") then
+            print(indent .. "[" .. pos .. "] => " .. tostring(t2) .. " {")
+            sub_printTable(val, indent .. string.rep(" ", string.len(pos) + 8))
+            print(indent .. string.rep(" ", string.len(pos) + 6) .. "}")
+          elseif (type(val) == "string") then
+            print(indent .. "[" .. pos .. '] => "' .. val .. '"')
+          else
+            print(indent .. "[" .. pos .. "] => " .. tostring(val))
+          end
+        end
+      else
+        print(indent .. tostring(t2))
+      end
+    end
+  end
+
+  if (type(t) == "table") then
+    print(tostring(t) .. " {")
+    sub_printTable(t, "  ")
+    print("}")
+  else
+    sub_printTable(t, "  ")
+  end
+end
 local function noMatch(parser, error)
   return {
     token = nil,
-    parser = parser:withError(error)
+    parser = parser:withError(error),
+    result = nil
   }
 end
 
@@ -17,11 +52,15 @@ local Token = {
   end
 }
 
--- local function debug(msg)
---   if os.getenv("DEBUG") == "1" then
---     print(msg)
---   end
--- end
+local function dlog(msg)
+  if os.getenv("DEBUG") == "1" then
+    if type(msg) == "table" then
+      printTable(msg)
+    else
+      print(msg)
+    end
+  end
+end
 
 local function insertToken(t, result)
   if result.tokens then
@@ -53,11 +92,6 @@ Parser = {
       input = input,
       pos = pos or 1,
       error = error or nil,
-      resultMapFn = nil,
-      map = function(self, fn)
-        self.resultMapFn = fn
-        return self
-      end,
       advance = function(self, amt)
         return Parser.new(self.input, self.pos + amt, self.error)
       end,
@@ -86,12 +120,8 @@ function M.parse(input, combinator)
   return p:run(combinator)
 end
 
-local function identity(match)
-  return match
-end
 -- Parse any string literal
-function M.literal(lit, mapFn)
-  mapFn = mapFn or identity
+function M.literal(lit)
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local match = string.sub(parser.input, parser.pos, parser.pos + #lit - 1)
@@ -99,7 +129,7 @@ function M.literal(lit, mapFn)
       return {
         token = Token.new(match, parser.pos, parser.pos + #lit),
         parser = parser:advance(#lit),
-        result = mapFn(match)
+        result = match
       }
     end
     return noMatch(parser, string.format("%s did not contain %s at position %d", parser.input, lit, parser.pos))
@@ -120,8 +150,7 @@ function M.number(value)
 end
 
 -- Parse any alphabetic letter
-function M.letter(mapFn)
-  mapFn = mapFn or identity
+function M.letter()
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local matched = string.match(string.sub(parser.input, parser.pos, parser.pos + 1), "%a")
@@ -129,7 +158,7 @@ function M.letter(mapFn)
       return {
         token = Token.new(matched, parser.pos, parser.pos + 1),
         parser = parser:advance(1),
-        result = mapFn(matched)
+        result = matched,
       }
     end
     return noMatch(parser,
@@ -138,8 +167,7 @@ function M.letter(mapFn)
 end
 
 -- Parse any digit
-function M.digit(mapFn)
-  mapFn = mapFn or identity
+function M.digit()
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local matched = string.match(string.sub(parser.input, parser.pos, parser.pos + 1), "%d")
@@ -147,7 +175,7 @@ function M.digit(mapFn)
       return {
         token = Token.new(matched, parser.pos, parser.pos + 1),
         parser = parser:advance(1),
-        result = mapFn(matched)
+        result = matched
       }
     end
     return noMatch(parser,
@@ -177,6 +205,15 @@ function M.oneOrMore(c)
         string.format("could not match %s at least once at position %d: %s", result.parser.input, result.parser.pos,
           result.parser.error))
     end
+  end
+end
+
+function M.map(parserFn, mapFn)
+  return function(parser)
+    local after = parserFn(parser)
+    dlog(after)
+    after.result = mapFn(after.result)
+    return after
   end
 end
 

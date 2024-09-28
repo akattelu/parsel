@@ -6,7 +6,7 @@ if file then
   contents = file:read("*a")
 end
 
-local letter = p.letter(function(match) return {} end)
+local letter = p.map(p.letter(), function(letter) return string.upper(letter) end
 
 local identParser = p.seq(p.letter(), p.zeroOrMore(p.either(p.letter(), p.digit())))
 -- local identParser = p.zeroOrMore(p.either(p.letter(), p.digit()))

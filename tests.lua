@@ -42,7 +42,7 @@ function TestStringLiteral()
   parsed = parsel.parse("", matchTestLiteral)
   assertErrContains(parsed, "out of bounds")
 
-  local testLiteralMapUpper = parsel.literal("teststring", function(match) return string.upper(match) end)
+  local testLiteralMapUpper = parsel.map(parsel.literal("teststring"), function(match) return string.upper(match) end)
   parsed = parsel.parse("teststring", testLiteralMapUpper)
   assertResult(parsed, "TESTSTRING")
 end
@@ -82,7 +82,8 @@ function TestLetter()
   parsed = parsel.parse("", matchAlpha)
   assertErrContains(parsed, "out of bounds")
 
-  local matchAlphaMapNode = parsel.letter(function(letter) return { type = "letter", value = string.upper(letter) } end)
+  local matchAlphaMapNode = parsel.map(matchAlpha,
+    (function(letter) return { type = "letter", value = string.upper(letter) } end))
   parsed = parsel.parse("a", matchAlphaMapNode)
   assertResult(parsed, { type = "letter", value = "A" })
 end
@@ -99,9 +100,9 @@ function TestDigit()
   parsed = parsel.parse("", matchDigit)
   assertErrContains(parsed, "out of bounds")
 
-  local matchDigitMapParse = parsel.digit(function(digit) return { type = "digit", value = tonumber(digit) } end)
-  parsed = parsel.parse("9", matchDigitMapParse)
-  assertResult(parsed, { type = "digit", value = 9 })
+  local mapParse = parsel.map(matchDigit, function(digit) return tonumber(digit) end)
+  parsed = parsel.parse("8", mapParse)
+  assertResult(parsed, 8)
 end
 
 function TestOneOrMore()
@@ -125,6 +126,7 @@ function TestAny()
   assertTok(result, "b")
   result = parsel.parse("c", matchABC)
   assertTok(result, "c")
+  assertResult(result, "c")
   result = parsel.parse("d", matchABC)
   assertErrContains(result, "no parser matched d at position 1")
 end
