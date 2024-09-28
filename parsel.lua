@@ -17,6 +17,36 @@ local Token = {
   end
 }
 
+-- local function debug(msg)
+--   if os.getenv("DEBUG") == "1" then
+--     print(msg)
+--   end
+-- end
+
+local function insertToken(t, result)
+  if result.tokens then
+    table.insert(t, result.tokens)
+  elseif result.token then
+    table.insert(t, result.token)
+  end
+end
+
+function M.printTokens(result, prefix)
+  if result.tokens then
+    for _, tok in ipairs(result.tokens) do
+      M.printTokens(tok, (prefix or "") .. "\t")
+    end
+  end
+  if type(result) == "table" then
+    for _, tok in ipairs(result) do
+      M.printTokens(tok, (prefix or "") .. "\t")
+    end
+  end
+  if result.match then
+    print(string.format("%sMatch: %s, [%d, %d]", prefix or "", result.match, result.startPos, result.endPos))
+  end
+end
+
 Parser = {
   new = function(input, pos, error)
     return {
@@ -33,7 +63,7 @@ Parser = {
         return parser(self)
       end,
       print = function(self)
-        print(string.format("Parser { token: %s, pos: %d, error: %s }", self.input, self.pos, self.error))
+        print(string.format("Parser { input: %s, pos: %d, error: %s }", self.input, self.pos, self.error))
       end,
       succeeded = function(self)
         return not self.error
@@ -121,7 +151,7 @@ function M.oneOrMore(c)
       local tokens = {}
       repeat
         current = next
-        table.insert(tokens, current.token)
+        insertToken(tokens, current)
         next = current.parser:run(c)
       until not next.parser:succeeded()
       return {
@@ -162,7 +192,7 @@ function M.seq(...)
       if not result.parser:succeeded() then
         return noMatch(result.parser, result.parser.error)
       end
-      table.insert(tokens, result.token)
+      insertToken(tokens, result)
     end
     return {
       tokens = tokens,
@@ -181,7 +211,7 @@ function M.zeroOrMore(c)
       local tokens = {}
       repeat
         current = next
-        table.insert(tokens, current.token)
+        insertToken(tokens, current)
         next = current.parser:run(c)
       until not next.parser:succeeded()
       return {
