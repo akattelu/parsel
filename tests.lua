@@ -68,6 +68,9 @@ function TestEither()
 
   parsed = parsel.parse("somethingelse", matchFirstOrSecond)
   assertErrContains(parsed, "no parser matched somethingelse at position 1")
+
+  parsed = parsel.parse(" ", parsel.either(parsel.letter(), parsel.digit()))
+  assertErrContains(parsed, "no parser matched   at position 1")
 end
 
 function TestNumber()
@@ -84,11 +87,13 @@ end
 function TestLetter()
   local matchAlpha = parsel.letter()
   local parsed = parsel.parse("abc", matchAlpha)
-  assertTok(parsed, "a", 1, 2)
+  assertTok(parsed, "a", 1, 1)
   assertResult(parsed, "a")
 
   parsed = parsel.parse("123", matchAlpha)
   assertErrContains(parsed, "123 did not contain an alphabetic letter at position 1")
+  parsed = parsel.parse(" ", matchAlpha)
+  assertErrContains(parsed, "  did not contain an alphabetic letter at position 1")
 
   parsed = parsel.parse("", matchAlpha)
   assertErrContains(parsed, "out of bounds")
@@ -102,11 +107,13 @@ end
 function TestDigit()
   local matchDigit = parsel.digit()
   local parsed = parsel.parse("123abc", matchDigit)
-  assertTok(parsed, "1", 1, 2)
+  assertTok(parsed, "1", 1, 1)
   assertResult(parsed, "1")
 
   parsed = parsel.parse("abc123", matchDigit)
   assertErrContains(parsed, "abc123 did not contain a digit at position 1")
+  parsed = parsel.parse(" ", matchDigit)
+  assertErrContains(parsed, "  did not contain a digit at position 1")
 
   parsed = parsel.parse("", matchDigit)
   assertErrContains(parsed, "out of bounds")
@@ -132,6 +139,12 @@ function TestOneOrMore()
   local mapJoin = parsel.map(matchAlphaWord, function(tokens) return table.concat(tokens, "") end)
   local parsed = parsel.parse("ident", mapJoin)
   assertResult(parsed, "ident")
+
+  local identParser = parsel.map(
+    parsel.zeroOrMore(parsel.letter()), function(tokens)
+      return table.concat(tokens, "")
+    end)
+  assertResult(parsel.parse('local i2', identParser), "local")
 end
 
 function TestAny()
@@ -168,18 +181,6 @@ function TestSeq()
   local parsed = parsel.parse("$12.34",
     parsel.map(matchLettersThenDigits, function(results) return tonumber(table.concat(results[2], "")) end))
   assertResult(parsed, 12.34)
-
-  local identParser = parsel.map(
-    parsel.seq(parsel.letter(), parsel.zeroOrMore(parsel.either(parsel.letter(), parsel.digit()))), function(tokens)
-      return {
-        type = "ident",
-        value = tokens[1] .. table.concat(tokens[2], "")
-      }
-    end)
-  assertResult(parsel.parse('local identifier234', identParser), {
-    type = "ident",
-    value = "identifier123"
-  })
 end
 
 function TestZeroOrMore()
@@ -195,8 +196,14 @@ function TestZeroOrMore()
   assertTokens(result, {})
 
   local mapJoin = parsel.map(matchAlphaWord, function(tokens) return table.concat(tokens, "") end)
-  local parsed = parsel.parse("ident", mapJoin)
+  local parsed = parsel.parse("ident23432", mapJoin)
   assertResult(parsed, "ident")
+
+  local identParser = parsel.map(
+    parsel.zeroOrMore(parsel.letter()), function(tokens)
+      return table.concat(tokens, "")
+    end)
+  assertResult(parsel.parse('local i2', identParser), "local")
 end
 
 function TestOptional()

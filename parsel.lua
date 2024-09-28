@@ -158,10 +158,10 @@ end
 function M.letter()
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
-    local matched = string.match(string.sub(parser.input, parser.pos, parser.pos + 1), "%a")
+    local matched = string.match(string.sub(parser.input, parser.pos, parser.pos), "%a")
     if matched then
       return {
-        token = Token.new(matched, parser.pos, parser.pos + 1),
+        token = Token.new(matched, parser.pos, parser.pos),
         parser = parser:advance(1),
         result = matched,
       }
@@ -175,10 +175,10 @@ end
 function M.digit()
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
-    local matched = string.match(string.sub(parser.input, parser.pos, parser.pos + 1), "%d")
+    local matched = string.match(string.sub(parser.input, parser.pos, parser.pos), "%d")
     if matched then
       return {
-        token = Token.new(matched, parser.pos, parser.pos + 1),
+        token = Token.new(matched, parser.pos, parser.pos),
         parser = parser:advance(1),
         result = matched
       }
@@ -270,26 +270,32 @@ function M.zeroOrMore(c)
   return function(parser)
     local result = parser:run(c)
     if result.parser:succeeded() then
-      local current
-      local next = result
       local tokens = {}
-      local results = {}
-      repeat
-        current = next
-        insertToken(tokens, current)
-        table.insert(results, current.result)
-        next = current.parser:run(c)
-      until not next.parser:succeeded()
+      insertToken(tokens, result)
+      local results = { result.result }
+      local currentParser = result.parser
+
+      while true do
+        local nextResult = currentParser:run(c)
+        if not nextResult.parser:succeeded() then
+          break
+        else
+          insertToken(tokens, nextResult)
+          table.insert(results, nextResult.result)
+          currentParser = nextResult.parser
+        end
+      end
+
       return {
         tokens = tokens,
-        parser = current.parser,
+        parser = currentParser,
         result = results
       }
     else
       -- zero matches
       return {
         tokens = {},
-        parser = parser,
+        parser = parser, -- return parser before result
         result = {}
       }
     end
