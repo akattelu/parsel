@@ -32,14 +32,19 @@ end
 
 function TestStringLiteral()
   local matchTestLiteral = parsel.literal("test")
-  local result = parsel.parse("teststring", matchTestLiteral)
-  assertTok(result, "test")
+  local parsed = parsel.parse("teststring", matchTestLiteral)
+  assertTok(parsed, "test")
+  assertResult(parsed, "test")
 
   local shouldFail = parsel.parse("otherstring", matchTestLiteral)
   assertErrContains(shouldFail, "otherstring did not contain test at position 1")
 
-  result = parsel.parse("", matchTestLiteral)
-  assertErrContains(result, "out of bounds")
+  parsed = parsel.parse("", matchTestLiteral)
+  assertErrContains(parsed, "out of bounds")
+
+  local testLiteralMapUpper = parsel.literal("teststring", function(match) return string.upper(match) end)
+  parsed = parsel.parse("teststring", testLiteralMapUpper)
+  assertResult(parsed, "TESTSTRING")
 end
 
 function TestEither()

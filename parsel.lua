@@ -90,14 +90,16 @@ local function identity(match)
   return match
 end
 -- Parse any string literal
-function M.literal(lit)
+function M.literal(lit, mapFn)
+  mapFn = mapFn or identity
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local match = string.sub(parser.input, parser.pos, parser.pos + #lit - 1)
     if lit == match then
       return {
         token = Token.new(match, parser.pos, parser.pos + #lit),
-        parser = parser:advance(#lit)
+        parser = parser:advance(#lit),
+        result = mapFn(match)
       }
     end
     return noMatch(parser, string.format("%s did not contain %s at position %d", parser.input, lit, parser.pos))
