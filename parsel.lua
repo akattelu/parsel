@@ -191,14 +191,17 @@ function M.oneOrMore(c)
       local current
       local next = result
       local tokens = {}
+      local results = {}
       repeat
         current = next
         insertToken(tokens, current)
+        table.insert(results, current.result)
         next = current.parser:run(c)
       until not next.parser:succeeded()
       return {
         tokens = tokens,
-        parser = current.parser
+        parser = current.parser,
+        result = results
       }
     else
       return noMatch(result.parser,
@@ -208,10 +211,10 @@ function M.oneOrMore(c)
   end
 end
 
+-- Map the result of a parser
 function M.map(parserFn, mapFn)
   return function(parser)
     local after = parserFn(parser)
-    dlog(after)
     after.result = mapFn(after.result)
     return after
   end
@@ -260,20 +263,24 @@ function M.zeroOrMore(c)
       local current
       local next = result
       local tokens = {}
+      local results = {}
       repeat
         current = next
         insertToken(tokens, current)
+        table.insert(results, current.result)
         next = current.parser:run(c)
       until not next.parser:succeeded()
       return {
         tokens = tokens,
-        parser = current.parser
+        parser = current.parser,
+        result = results
       }
     else
       -- zero matches
       return {
         tokens = {},
-        parser = parser
+        parser = parser,
+        result = {}
       }
     end
   end

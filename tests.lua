@@ -49,14 +49,16 @@ end
 
 function TestEither()
   local matchFirstOrSecond = parsel.either(parsel.literal("first"), parsel.literal("second"))
-  local result = parsel.parse("firstsomething", matchFirstOrSecond)
-  assertTok(result, "first", 1, 6)
+  local parsed = parsel.parse("firstsomething", matchFirstOrSecond)
+  assertTok(parsed, "first", 1, 6)
+  assertResult(parsed, "first")
 
-  result = parsel.parse("secondsomething", matchFirstOrSecond)
-  assertTok(result, "second", 1, 7)
+  parsed = parsel.parse("secondsomething", matchFirstOrSecond)
+  assertTok(parsed, "second", 1, 7)
+  assertResult(parsed, "second")
 
-  result = parsel.parse("somethingelse", matchFirstOrSecond)
-  assertErrContains(result, "no parser matched somethingelse at position 1")
+  parsed = parsel.parse("somethingelse", matchFirstOrSecond)
+  assertErrContains(parsed, "no parser matched somethingelse at position 1")
 end
 
 function TestNumber()
@@ -109,6 +111,7 @@ function TestOneOrMore()
   local matchAlphaWord = parsel.oneOrMore(parsel.letter())
   local result = parsel.parse("ident", matchAlphaWord)
   assertTokens(result, { "i", "d", "e", "n", "t" })
+  assertTokens(result, { "i", "d", "e", "n", "t" })
 
   result = parsel.parse("i23", matchAlphaWord)
   assertTokens(result, { "i" })
@@ -116,6 +119,10 @@ function TestOneOrMore()
   result = parsel.parse("234", matchAlphaWord)
   assertErrContains(result,
     "could not match 234 at least once at position 1: 234 did not contain an alphabetic letter at position 1")
+
+  local mapJoin = parsel.map(matchAlphaWord, function(tokens) return table.concat(tokens, "") end)
+  local parsed = parsel.parse("ident", mapJoin)
+  assertResult(parsed, "ident")
 end
 
 function TestAny()
@@ -124,6 +131,7 @@ function TestAny()
   assertTok(result, "a")
   result = parsel.parse("b", matchABC)
   assertTok(result, "b")
+  assertResult(result, "b")
   result = parsel.parse("c", matchABC)
   assertTok(result, "c")
   assertResult(result, "c")
@@ -152,12 +160,17 @@ function TestZeroOrMore()
   local matchAlphaWord = parsel.zeroOrMore(parsel.letter())
   local result = parsel.parse("ident", matchAlphaWord)
   assertTokens(result, { "i", "d", "e", "n", "t" })
+  assertResult(result, { "i", "d", "e", "n", "t" })
 
   result = parsel.parse("i23", matchAlphaWord)
   assertTokens(result, { "i" })
 
   result = parsel.parse("234", matchAlphaWord)
   assertTokens(result, {})
+
+  local mapJoin = parsel.map(matchAlphaWord, function(tokens) return table.concat(tokens, "") end)
+  local parsed = parsel.parse("ident", mapJoin)
+  assertResult(parsed, "ident")
 end
 
 os.exit(lu.LuaUnit.run())
