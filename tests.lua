@@ -84,14 +84,19 @@ end
 
 function TestDigit()
   local matchDigit = parsel.digit()
-  local result = parsel.parse("123abc", matchDigit)
-  assertTok(result, "1", 1, 2)
+  local parsed = parsel.parse("123abc", matchDigit)
+  assertTok(parsed, "1", 1, 2)
+  assertResult(parsed, "1")
 
-  result = parsel.parse("abc123", matchDigit)
-  assertErrContains(result, "abc123 did not contain a digit at position 1")
+  parsed = parsel.parse("abc123", matchDigit)
+  assertErrContains(parsed, "abc123 did not contain a digit at position 1")
 
-  result = parsel.parse("", matchDigit)
-  assertErrContains(result, "out of bounds")
+  parsed = parsel.parse("", matchDigit)
+  assertErrContains(parsed, "out of bounds")
+
+  local matchDigitMapParse = parsel.digit(function(digit) return { type = "digit", value = tonumber(digit) } end)
+  parsed = parsel.parse("9", matchDigitMapParse)
+  assertResult(parsed, { type = "digit", value = 9 })
 end
 
 function TestOneOrMore()

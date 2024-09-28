@@ -136,14 +136,16 @@ function M.letter(mapFn)
 end
 
 -- Parse any digit
-function M.digit()
+function M.digit(mapFn)
+  mapFn = mapFn or identity
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local matched = string.match(string.sub(parser.input, parser.pos, parser.pos + 1), "%d")
     if matched then
       return {
         token = Token.new(matched, parser.pos, parser.pos + 1),
-        parser = parser:advance(1)
+        parser = parser:advance(1),
+        result = mapFn(matched)
       }
     end
     return noMatch(parser,
