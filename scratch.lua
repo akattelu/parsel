@@ -29,11 +29,15 @@ local stringParser = p.map(p.seq(p.literal('"'), p.zeroOrMore(p.literalBesides('
   end)
 
 
+local expressionParser
 local infixExpressionParser
 local primitiveExpressionParser = p.any(numberParser, stringParser, identParser)
-local expressionParser = p.any(p.lazy(function() return infixExpressionParser end), primitiveExpressionParser)
+local parenthesizedExpressionParser = p.seq(p.literal("("), p.lazy(function() return expressionParser end),
+  p.literal(")"))
+local baseExpressionParser = p.either(primitiveExpressionParser, parenthesizedExpressionParser)
+expressionParser = p.any(p.lazy(function() return infixExpressionParser end), baseExpressionParser)
 infixExpressionParser = p.map(
-  p.seq(primitiveExpressionParser,
+  p.seq(baseExpressionParser,
     p.optionalWhitespace(),
     p.any(p.literal("+"), p.literal("-"), p.literal("*"), p.literal("/")),
     p.optionalWhitespace(),
