@@ -252,4 +252,11 @@ c]]
   })
 end
 
+function TestOptionalWhitespace()
+  local parsed = parsel.parse(" \t \n ", parsel.optionalWhitespace())
+  assertResult(parsed, { " ", "\t", " ", "\n", " " })
+  parsed = parsel.parse("local", parsel.optionalWhitespace())
+  assertResult(parsed, parsel.nullResult)
+end
+
 os.exit(lu.LuaUnit.run())

@@ -336,4 +336,9 @@ function M.newline()
   return M.literal("\n")
 end
 
+-- Match optional whitespace
+function M.optionalWhitespace()
+  return M.optional(M.oneOrMore(M.any(M.literal(" "), M.literal("\t"), M.literal("\n"))))
+end
+
 return M
