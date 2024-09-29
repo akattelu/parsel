@@ -78,17 +78,6 @@ function TestEither()
   assertErrContains(parsed, "no parser matched   at position 1")
 end
 
-function TestNumber()
-  local match100 = parsel.number(100)
-  local result = parsel.parse("100things", match100)
-  assertTok(result, "100")
-
-  result = parsel.parse('hundredthings', match100)
-  assertErrContains(result, "hundredthings did not contain 100 at position 1")
-
-  lu.assertErrorMsgContains("non-number passed to parsel.number", parsel.number, "hello world")
-end
-
 function TestLetter()
   local matchAlpha = parsel.letter()
   local parsed = parsel.parse("abc", matchAlpha)

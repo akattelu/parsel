@@ -15,3 +15,27 @@ local parsed = p.parse("1234", intParserToNumber)
 print(parsed.result)
 -- 1234
 ```
+
+## Available Parsers
+
+```lua
+local p = require 'parsel'
+p.digit() -- matches any single digit
+p.letter() -- matches any alphabetic letter
+p.literal(str) -- matches the literal string `str`
+p.newline() -- matches a newline character
+p.optionalWhitespace() -- matches zero or more spaces, tabs, or newlines
+p.char() -- matches any single character
+```
+
+## Available combinators
+
+```lua
+local p = require 'parsel'
+p.any(...) -- succeeds with the first successful parser
+p.either(c1, c2) -- succeds with first of c1 or c2, fails otherwise
+p.seq(...) -- requires all parsers to succeed in order
+p.optional(c) -- attempts to parse with c, succeeds with p.nullResult otherwise
+p.zeroOrMore(c) -- attempts to parse 0 or more instances of c
+p.oneOrMore(c) -- attempts to parse at least 1 instead of c
+```

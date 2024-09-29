@@ -146,14 +146,6 @@ function M.either(c1, c2)
   return M.any(c1, c2)
 end
 
--- Parse any number
-function M.number(value)
-  assert(type(value) == "number", string.format("non-number passed to parsel.number: %s", value))
-  return function(parser)
-    return M.literal(tostring(value))(parser)
-  end
-end
-
 -- Parse any alphabetic letter
 function M.letter()
   return function(parser)
