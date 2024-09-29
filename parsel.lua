@@ -318,4 +318,17 @@ function M.optional(c)
   end
 end
 
+-- Match any single character
+function M.char()
+  return function(parser)
+    if not parser:inBounds() then return noMatch(parser, "out of bounds") end
+    local match = string.sub(parser.input, parser.pos, parser.pos)
+    return {
+      token = Token.new(match, parser.pos, parser.pos),
+      parser = parser:advance(1),
+      result = match
+    }
+  end
+end
+
 return M

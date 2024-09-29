@@ -22,6 +22,9 @@ local floatParser = p.map(p.seq(intParser, p.literal("."), intParser),
   function(digList) return { type = "number", value = tonumber(table.concat(digList, "")) } end)
 local numberParser = p.either(intParser, floatParser)
 
+local stringParser = p.seq(p.literal('"'), p.zeroOrMore(), p.literal('"'))
+
+
 local assignmentStmtParser = p.map(
   p.seq(localKeywordParser
   , oWhitespace
@@ -37,7 +40,14 @@ local assignmentStmtParser = p.map(
       value = results[7]
     }
   end)
+local expressionParser = p.any(numberParser, identParser)
+local expressionStmtParser = expressionParser
+local stmtParser = p.any(assignmentStmtParser, expressionStmtParser)
 
-local parsed = p.parse(contents, assignmentStmtParser)
-p.dlog(parsed)
+local parsed = p.parse(contents, stmtParser)
+if not parsed.parser:succeeded() then
+  print(parsed.parser.error)
+  os.exit(1)
+end
+p.dlog(parsed.result)
 os.exit(0)

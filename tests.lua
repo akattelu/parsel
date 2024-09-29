@@ -217,4 +217,21 @@ function TestOptional()
   assertResult(parsed, { "a", parsel.nullResult, "b" })
 end
 
+function TestChar()
+  local matchChar = parsel.char()
+  local parsed = parsel.parse("123abc", matchChar)
+  assertTok(parsed, "1", 1, 1)
+  assertResult(parsed, "1")
+  parsed = parsel.parse("abc", matchChar)
+  assertTok(parsed, "a", 1, 1)
+  assertResult(parsed, "a")
+
+  parsed = parsel.parse("", matchChar)
+  assertErrContains(parsed, "out of bounds")
+
+  local mapParse = parsel.map(matchChar, function(digit) return tonumber(digit) end)
+  parsed = parsel.parse("8", mapParse)
+  assertResult(parsed, 8)
+end
+
 os.exit(lu.LuaUnit.run())
