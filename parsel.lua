@@ -347,7 +347,13 @@ end
 
 -- Match optional whitespace
 function M.optionalWhitespace()
-  return M.optional(M.oneOrMore(M.any(M.literal(" "), M.literal("\t"), M.literal("\n"))))
+  return M.optional(M.oneOrMore(M.any(M.literal(" "), M.literal("\t"), M.newline())))
+end
+
+function M.lazy(f)
+  return function(parser)
+    return parser:run(f())
+  end
 end
 
 return M

@@ -38,4 +38,5 @@ p.seq(...) -- requires all parsers to succeed in order
 p.optional(c) -- attempts to parse with c, succeeds with p.nullResult otherwise
 p.zeroOrMore(c) -- attempts to parse 0 or more instances of c
 p.oneOrMore(c) -- attempts to parse at least 1 instead of c
+p.lazy(func) -- returns a combinator that lazily evaluates func (func should return a parser)
 ```

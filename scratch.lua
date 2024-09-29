@@ -6,19 +6,6 @@ if file then
   contents = file:read("*a")
 end
 
-
--- local function mapDropNull(parserFn)
---   return p.map(parserFn, function(results)
---     local final = {}
---     for _, r in ipairs(results) do
---       if r ~= p.nullResult then
---         table.insert(final, r)
---       end
---     end
---   end)
--- end
-
-
 local localKeywordParser = p.map(p.literal("local"), function(_) return { type = "keyword", value = "local" } end)
 local equalParser = p.map(p.literal("="), function(_) return { type = "keyword", value = "=" } end)
 local identParser = p.map(p.seq(p.letter(), p.zeroOrMore(p.either(p.letter(), p.digit()))), function(tokens)
@@ -33,15 +20,33 @@ local floatParser = p.map(p.seq(intParser, p.literal("."), intParser),
   function(digList) return { type = "number", value = tonumber(table.concat(digList, "")) } end)
 local numberParser = p.either(intParser, floatParser)
 
-local stringParser = p.map(p.seq(p.literal('"'), p.zeroOrMore(p.literalBesides('"')), p.literal('"')), function(seq)
-  return {
-    type = "string",
-    value = table.concat(seq[2], "")
-  }
-end)
+local stringParser = p.map(p.seq(p.literal('"'), p.zeroOrMore(p.literalBesides('"')), p.literal('"')),
+  function(seq)
+    return {
+      type = "string",
+      value = table.concat(seq[2], "")
+    }
+  end)
 
 
-local expressionParser = p.any(numberParser, stringParser, identParser)
+local infixExpressionParser
+local primitiveExpressionParser = p.any(numberParser, stringParser, identParser)
+local expressionParser = p.any(p.lazy(function() return infixExpressionParser end), primitiveExpressionParser)
+infixExpressionParser = p.map(
+  p.seq(primitiveExpressionParser,
+    p.optionalWhitespace(),
+    p.any(p.literal("+"), p.literal("-"), p.literal("*"), p.literal("/")),
+    p.optionalWhitespace(),
+    expressionParser
+  ), function(seq)
+    return {
+      type = "infix_expression",
+      lhs = seq[1],
+      op = seq[3],
+      rhs = seq[5],
+    }
+  end
+)
 local expressionStmtParser = expressionParser
 local assignmentStmtParser = p.map(
   p.seq(localKeywordParser
