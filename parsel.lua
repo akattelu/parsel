@@ -1,3 +1,6 @@
+--- parsel
+-- @module M
+
 local M = {}
 
 local function printTable(t)
