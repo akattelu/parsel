@@ -331,6 +331,23 @@ function M.char()
   end
 end
 
+-- Match anything but the specified literal single character
+function M.literalBesides(char)
+  return function(parser)
+    if not parser:inBounds() then return noMatch(parser, "out of bounds") end
+    local match = string.sub(parser.input, parser.pos, parser.pos)
+    if match ~= char then
+      return {
+        token = Token.new(match, parser.pos, parser.pos),
+        parser = parser:advance(1),
+        result = match
+      }
+    else
+      return noMatch(parser, string.format("%s matched %s at position %d", parser.input, char, parser.pos))
+    end
+  end
+end
+
 -- Match single newline char
 function M.newline()
   return M.literal("\n")

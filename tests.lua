@@ -45,6 +45,11 @@ function TestStringLiteral()
   assertTok(parsed, "=")
   assertResult(parsed, "=")
 
+  local matchTestQuote = parsel.literal('"')
+  parsed = parsel.parse([["]], matchTestQuote)
+  assertTok(parsed, [["]])
+  assertResult(parsed, [["]])
+
   local shouldFail = parsel.parse("otherstring", matchTestLiteral)
   assertErrContains(shouldFail, "otherstring did not contain test at position 1")
 
@@ -257,6 +262,14 @@ function TestOptionalWhitespace()
   assertResult(parsed, { " ", "\t", " ", "\n", " " })
   parsed = parsel.parse("local", parsel.optionalWhitespace())
   assertResult(parsed, parsel.nullResult)
+end
+
+function TestLiteralBesides()
+  local notB = parsel.literalBesides("b")
+  local parsed = parsel.parse(".", notB)
+  assertResult(parsed, ".")
+  parsed = parsel.parse("b", notB)
+  assertErrContains(parsed, "b matched b at position 1")
 end
 
 os.exit(lu.LuaUnit.run())
