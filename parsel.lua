@@ -331,4 +331,9 @@ function M.char()
   end
 end
 
+-- Match single newline char
+function M.newline()
+  return M.literal("\n")
+end
+
 return M

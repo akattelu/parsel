@@ -7,6 +7,18 @@ if file then
 end
 
 
+-- local function mapDropNull(parserFn)
+--   return p.map(parserFn, function(results)
+--     local final = {}
+--     for _, r in ipairs(results) do
+--       if r ~= p.nullResult then
+--         table.insert(final, r)
+--       end
+--     end
+--   end)
+-- end
+
+
 local oWhitespace = p.optional(p.zeroOrMore(p.any(p.literal(" "), p.literal("\t"), p.literal("\n"))))
 local localKeywordParser = p.map(p.literal("local"), function(_) return { type = "keyword", value = "local" } end)
 local equalParser = p.map(p.literal("="), function(_) return { type = "keyword", value = "=" } end)
@@ -22,7 +34,12 @@ local floatParser = p.map(p.seq(intParser, p.literal("."), intParser),
   function(digList) return { type = "number", value = tonumber(table.concat(digList, "")) } end)
 local numberParser = p.either(intParser, floatParser)
 
-local stringParser = p.seq(p.literal('"'), p.zeroOrMore(), p.literal('"'))
+local stringParser = p.map(p.seq(p.literal('"'), p.zeroOrMore(p.char()), p.literal('"')), function(seq)
+  return {
+    type = "string",
+    value = table.concat(seq[2], "")
+  }
+end)
 
 
 local assignmentStmtParser = p.map(
@@ -40,11 +57,12 @@ local assignmentStmtParser = p.map(
       value = results[7]
     }
   end)
-local expressionParser = p.any(numberParser, identParser)
+local expressionParser = p.any(numberParser, stringParser, identParser)
 local expressionStmtParser = expressionParser
 local stmtParser = p.any(assignmentStmtParser, expressionStmtParser)
+local programParser = p.zeroOrMore(p.map(p.seq(stmtParser, p.literal("\n")), function(x) return x[1] end))
 
-local parsed = p.parse(contents, stmtParser)
+local parsed = p.parse(contents, programParser)
 if not parsed.parser:succeeded() then
   print(parsed.parser.error)
   os.exit(1)

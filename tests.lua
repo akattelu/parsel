@@ -234,4 +234,22 @@ function TestChar()
   assertResult(parsed, 8)
 end
 
+function TestNewLine()
+  local input = [[
+
+a
+b
+c]]
+
+  local parsed = parsel.parse(input, parsel.newline())
+  assertTok(parsed, "\n")
+
+  parsed = parsel.parse(input, parsel.oneOrMore(parsel.seq(parsel.newline(), parsel.letter())))
+  assertResult(parsed, {
+    { "\n", "a" },
+    { "\n", "b" },
+    { "\n", "c" },
+  })
+end
+
 os.exit(lu.LuaUnit.run())
