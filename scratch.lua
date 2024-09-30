@@ -1,10 +1,12 @@
 local p = require 'parsel'
 
-local file = io.open("test.mx", "r")
+local file = io.open("sample.lua", "r")
 local contents
 if file then
   contents = file:read("*a")
 end
+
+local Parsers = {}
 
 local localKeywordParser = p.map(p.literal("local"), function(_) return { type = "keyword", value = "local" } end)
 local equalParser = p.map(p.literal("="), function(_) return { type = "keyword", value = "=" } end)
@@ -32,14 +34,14 @@ local stringParser = p.map(p.seq(p.literal('"'), p.zeroOrMore(p.literalBesides('
 local expressionParser
 local infixExpressionParser
 local primitiveExpressionParser = p.any(numberParser, stringParser, identParser)
-local parenthesizedExpressionParser = p.seq(p.literal("("), p.lazy(function() return expressionParser end),
-  p.literal(")"))
+local parenthesizedExpressionParser = p.map(p.seq(p.literal("("), p.lazy(function() return expressionParser end),
+  p.literal(")")), function(seq) return seq[2] end)
 local baseExpressionParser = p.either(primitiveExpressionParser, parenthesizedExpressionParser)
 expressionParser = p.any(p.lazy(function() return infixExpressionParser end), baseExpressionParser)
 infixExpressionParser = p.map(
   p.seq(baseExpressionParser,
     p.optionalWhitespace(),
-    p.any(p.literal("+"), p.literal("-"), p.literal("*"), p.literal("/")),
+    p.any(p.literal("+"), p.literal("-"), p.literal("*"), p.literal("/"), p.literal("^")),
     p.optionalWhitespace(),
     expressionParser
   ), function(seq)
@@ -53,18 +55,26 @@ infixExpressionParser = p.map(
 )
 local expressionStmtParser = expressionParser
 local assignmentStmtParser = p.map(
-  p.seq(localKeywordParser
-  , p.optionalWhitespace()
-  , identParser
-  , p.optionalWhitespace()
-  , equalParser
-  , p.optionalWhitespace()
-  , expressionParser
+  p.seq(
+    p.optional(localKeywordParser)
+    , p.optionalWhitespace()
+    , identParser
+    , p.optionalWhitespace()
+    , equalParser
+    , p.optionalWhitespace()
+    , expressionParser
   ), function(results)
+    local scope
+    if results[1] == p.nullResult then
+      scope = "GLOBAL"
+    else
+      scope = "LOCAL"
+    end
     return {
       type = "assignment",
       ident = results[3],
-      value = results[7]
+      value = results[7],
+      scope = scope,
     }
   end)
 local stmtParser = p.any(assignmentStmtParser, expressionStmtParser)

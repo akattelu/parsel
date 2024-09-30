@@ -2,8 +2,8 @@ local lu = require 'luaunit'
 local parsel = require 'parsel'
 
 local function assertResult(parsed, actual)
-  lu.assertEquals(parsed.result, actual)
   lu.assertNil(parsed.parser.error)
+  lu.assertEquals(parsed.result, actual)
 end
 
 local function assertErrContains(result, err)
@@ -259,6 +259,12 @@ function TestLiteralBesides()
   assertResult(parsed, ".")
   parsed = parsel.parse("b", notB)
   assertErrContains(parsed, "b matched b at position 1")
+end
+
+function TestAnyLiterals()
+  local brackets = parsel.oneOrMore(parsel.anyLiteral("[", "]", "(", ")", "{", "}"))
+  local parsed = parsel.parse("[](){}", brackets)
+  assertResult(parsed, { "[", "]", "(", ")", "{", "}" })
 end
 
 os.exit(lu.LuaUnit.run())

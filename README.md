@@ -33,6 +33,7 @@ p.char() -- matches any single character
 ```lua
 local p = require 'parsel'
 p.any(...) -- succeeds with the first successful parser
+p.anyLiteral(...) -- succeeds if any of the specified literals match
 p.either(c1, c2) -- succeds with first of c1 or c2, fails otherwise
 p.seq(...) -- requires all parsers to succeed in order
 p.optional(c) -- attempts to parse with c, succeeds with p.nullResult otherwise

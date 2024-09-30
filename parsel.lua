@@ -1,5 +1,6 @@
---- parsel
+--- Parsel: a parser combinator library for Lua
 -- @module M
+-- the base module
 
 local M = {}
 
@@ -353,10 +354,20 @@ function M.optionalWhitespace()
   return M.optional(M.oneOrMore(M.any(M.literal(" "), M.literal("\t"), M.newline())))
 end
 
+-- Returns a combinator that lazily evaluates func (func should return a parser)
 function M.lazy(f)
   return function(parser)
     return parser:run(f())
   end
+end
+
+-- Match any literal passed in, succeeds with the match
+function M.anyLiteral(...)
+  local literalParsers = {}
+  for _, l in ipairs(table.pack(...)) do
+    table.insert(literalParsers, M.literal(l))
+  end
+  return M.any(table.unpack(literalParsers))
 end
 
 return M
