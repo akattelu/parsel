@@ -1,4 +1,4 @@
----@diagnostic disable: need-check-nil
+---@diagnostic disable: need-check-nil, param-type-mismatch
 local lu = require 'luaunit'
 local p = require 'lua_parser'
 
@@ -116,6 +116,23 @@ function TestParenthesized()
   assertNumber(tree[4].rhs.rhs, 3)
 end
 
+function TestNotExpr()
+  local tree, err = p.parseProgramString([[
+    not true
+    not not true]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 2)
+  assertBool(tree[1].rhs, true)
+  lu.assertEquals(tree[1].op, "not")
+  lu.assertEquals(tree[1].type, "prefix_expression")
+
+  assertBool(tree[2].rhs.rhs, true)
+  lu.assertEquals(tree[2].op, "not")
+  lu.assertEquals(tree[2].rhs.op, "not")
+  lu.assertEquals(tree[2].type, "prefix_expression")
+  lu.assertEquals(tree[2].rhs.type, "prefix_expression")
+end
+
 function TestInfix()
   local tree, err = p.parseProgramString([[
     1 + 2
@@ -125,9 +142,13 @@ function TestInfix()
     3^4
     true == true
     false ~= true
-    1 + (2 + 3)]])
+    1 + (2 + 3)
+    1 + (2 + 3) + 4]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 8)
+  lu.assertEquals(#tree, 9)
+  for _, v in ipairs(tree) do
+    lu.assertEquals(v.type, "infix_expression")
+  end
   assertInfixNumbers(tree[1], 1, "+", 2)
   assertInfixNumbers(tree[2], 3, "-", 4)
   assertInfixNumbers(tree[3], 123, "*", 456)
@@ -138,6 +159,10 @@ function TestInfix()
   assertNumber(tree[8].lhs, 1)
   lu.assertEquals(tree[8].op, "+")
   assertInfixNumbers(tree[8].rhs, 2, "+", 3)
+  assertNumber(tree[9].lhs, 1)
+  lu.assertEquals(tree[9].rhs.op, "+")
+  assertInfixNumbers(tree[9].rhs.lhs, 2, "+", 3)
+  assertNumber(tree[9].rhs.rhs, 4)
 end
 
 os.exit(lu.LuaUnit.run())
