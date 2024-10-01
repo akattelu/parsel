@@ -233,7 +233,9 @@ function M.any(...)
         return result
       end
     end
-    return noMatch(parser, string.format("no parser matched %s at position %d", parser.input, parser.pos))
+    return noMatch(parser,
+      string.format([[no parser matched %s at position %d (starting at "%s")]], parser.input, parser.pos,
+        string.sub(parser.input, parser.pos, parser.pos)))
   end
 end
 

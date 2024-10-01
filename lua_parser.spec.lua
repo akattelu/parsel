@@ -74,15 +74,35 @@ function TestPrimitives()
     "hello world"
     true
     false
-    nil]])
-  lu.assertEquals(#tree, 6)
+    nil
+    x]])
   lu.assertNil(err)
+  lu.assertEquals(#tree, 7)
   assertNumber(tree[1], 5)
   assertNumber(tree[2], 12.34)
   assertString(tree[3], "hello world")
   assertBool(tree[4], true)
   assertBool(tree[5], false)
   assertNilValue(tree[6])
+  assertIdentifier(tree[7], "x")
+end
+
+function TestParenthesized()
+  local tree, err = p.parseProgramString([[
+    (1)
+    (12.34)
+    (1 + 2)
+    (1 + (2 + 3))]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 4)
+  assertNumber(tree[1], 1)
+  assertNumber(tree[2], 12.34)
+  assertNumber(tree[3].lhs, 1)
+  lu.assertEquals(tree[3].op, '+')
+  assertNumber(tree[3].rhs, 2)
+  assertNumber(tree[4].rhs.lhs, 2)
+  lu.assertEquals(tree[4].rhs.op, '+')
+  assertNumber(tree[4].rhs.rhs, 3)
 end
 
 os.exit(lu.LuaUnit.run())

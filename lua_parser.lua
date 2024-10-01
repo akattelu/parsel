@@ -42,12 +42,19 @@ Parsers.nilValue = p.map(p.literal("nil"), function(_) return { type = "nil" } e
 -- Expressions
 Parsers.primitiveExpression = p.any(Parsers.number, Parsers.string, Parsers.boolean, Parsers.nilValue, Parsers.ident)
 Parsers.parenthesizedExpression = p.map(
-  p.seq(p.literal("("), p.lazy(function() return Parsers.expression end),
-    p.literal(")")), pick(2))
+  p.seq(
+    p.literal("("),
+    p.lazy(function() return Parsers.expression end),
+    p.literal(")")
+  ), pick(2))
 Parsers.baseExpression = p.either(Parsers.primitiveExpression, Parsers.parenthesizedExpression)
-Parsers.expression = p.any(Parsers.baseExpression, p.lazy(function() return Parsers.infixExpression end),
-  p.lazy(function() return Parsers.notExpression end), p.lazy(function() return Parsers.prefixExpression end)
+Parsers.expression = p.any(
+  p.lazy(function() return Parsers.infixExpression end),
+  p.lazy(function() return Parsers.notExpression end),
+  p.lazy(function() return Parsers.prefixExpression end),
+  Parsers.baseExpression
 )
+
 Parsers.prefixExpression = p.map(
   p.seq(
     p.anyLiteral("-"),
@@ -91,7 +98,7 @@ Parsers.infixExpression = p.map(
 )
 -- Statements
 Parsers.expressionStatement = p.map(Parsers.expression, function(e)
-  Parsers.dlog(e)
+  -- Parsers.dlog(e)
   return e
 end)
 Parsers.declaration = p.map(
