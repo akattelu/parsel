@@ -133,6 +133,14 @@ function TestNotExpr()
   lu.assertEquals(tree[2].rhs.type, "prefix_expression")
 end
 
+function TestPrefixExpression()
+  local tree, err = p.parseProgramString([[-1]])
+  lu.assertNil(err)
+  assertNumber(tree[1].rhs, 1)
+  lu.assertEquals(tree[1].op, "-")
+  lu.assertEquals(tree[1].type, "prefix_expression")
+end
+
 function TestInfix()
   local tree, err = p.parseProgramString([[
     1 + 2
