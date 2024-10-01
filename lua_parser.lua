@@ -18,7 +18,14 @@ Parsers.ident = p.map(p.seq(p.letter(), p.zeroOrMore(p.either(p.letter(), p.digi
   function(tokens) return { type = "identifier", value = tokens[1] .. table.concat(tokens[2], "") } end)
 Parsers.int = p.map(p.oneOrMore(p.digit()),
   function(digList) return { type = "number", value = tonumber(table.concat(digList, "")) } end)
-
+Parsers.float = p.map(p.seq(Parsers.int, p.literal("."), Parsers.int),
+  function(digList)
+    return {
+      type = "number",
+      value = tonumber(tostring(digList[1].value) ..
+        "." .. tostring(digList[3].value))
+    }
+  end)
 Parsers.string = p.map(p.seq(p.literal('"'), p.zeroOrMore(p.literalBesides('"')), p.literal('"')),
   function(seq)
     return {
@@ -26,19 +33,21 @@ Parsers.string = p.map(p.seq(p.literal('"'), p.zeroOrMore(p.literalBesides('"'))
       value = table.concat(seq[2], "")
     }
   end)
-Parsers.float = p.map(p.seq(Parsers.int, p.literal("."), Parsers.int),
-  function(digList) return { type = "number", value = tonumber(table.concat(digList, "")) } end)
-Parsers.number = p.either(Parsers.int, Parsers.float)
+Parsers.number = p.either(Parsers.float, Parsers.int)
+Parsers.boolean = p.map(p.anyLiteral("true", "false"), function(val)
+  return { type = "boolean", value = val == "true" and true or false }
+end)
+Parsers.nilValue = p.map(p.literal("nil"), function(_) return { type = "nil" } end)
 
 -- Expressions
-Parsers.primitiveExpression = p.any(Parsers.number, Parsers.string, Parsers.ident)
+Parsers.primitiveExpression = p.any(Parsers.number, Parsers.string, Parsers.boolean, Parsers.nilValue, Parsers.ident)
 Parsers.parenthesizedExpression = p.map(
   p.seq(p.literal("("), p.lazy(function() return Parsers.expression end),
     p.literal(")")), pick(2))
 Parsers.baseExpression = p.either(Parsers.primitiveExpression, Parsers.parenthesizedExpression)
-Parsers.expression = p.any(p.lazy(function() return Parsers.infixExpression end),
-  p.lazy(function() return Parsers.notExpression end), p.lazy(function() return Parsers.prefixExpression end),
-  Parsers.baseExpression)
+Parsers.expression = p.any(Parsers.baseExpression, p.lazy(function() return Parsers.infixExpression end),
+  p.lazy(function() return Parsers.notExpression end), p.lazy(function() return Parsers.prefixExpression end)
+)
 Parsers.prefixExpression = p.map(
   p.seq(
     p.anyLiteral("-"),
@@ -81,7 +90,10 @@ Parsers.infixExpression = p.map(
   end
 )
 -- Statements
-Parsers.expressionStatement = Parsers.expression
+Parsers.expressionStatement = p.map(Parsers.expression, function(e)
+  Parsers.dlog(e)
+  return e
+end)
 Parsers.declaration = p.map(
   p.seq(Parsers.localDecl, p.optionalWhitespace(), Parsers.ident),
   function(seq)
@@ -120,7 +132,10 @@ Parsers.assignment =
 Parsers.statement = p.any(Parsers.assignment, Parsers.declaration, Parsers.expressionStatement)
 
 -- Program
-Parsers.program = p.map(p.seq(p.optionalWhitespace(), p.sepBy(Parsers.statement, p.oneOrMore(p.newline()))), pick(2))
+-- TODO: fix so that you can have new lines at the end of the program
+Parsers.program = p.map(
+  p.seq(p.optionalWhitespace(), p.sepBy(Parsers.statement, p.oneOrMore(p.seq(p.newline(), p.optionalWhitespace()))),
+    p.optionalWhitespace()), pick(2))
 
 
 -- Parse string
