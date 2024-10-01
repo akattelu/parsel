@@ -1,12 +1,5 @@
 local p = require 'parsel'
 
-local file = io.open("sample.lua", "r")
-local contents
-if file then
-  contents = file:read("*a")
-end
-
-
 --- Return a function that selects the nth item from a sequence
 local pick = function(n)
   return function(seq)
@@ -14,8 +7,7 @@ local pick = function(n)
   end
 end
 
-local Parsers = {
-}
+local Parsers = {}
 
 -- Keywords
 Parsers.localDecl = p.map(p.literal("local"), function(_) return { type = "keyword", value = "local" } end)
@@ -95,7 +87,7 @@ Parsers.declaration = p.map(
   function(seq)
     return {
       type = "declaration",
-      ident = seq[3],
+      identifier = seq[3],
       scope = "LOCAL",
     }
   end
@@ -128,12 +120,42 @@ Parsers.assignment =
 Parsers.statement = p.any(Parsers.assignment, Parsers.declaration, Parsers.expressionStatement)
 
 -- Program
-Parsers.program = p.oneOrMore(p.map(p.seq(Parsers.statement, p.newline()), pick(1)))
+Parsers.program = p.map(p.seq(p.zeroOrMore(p.map(p.seq(Parsers.statement, p.newline()), pick(1))), Parsers.statement),
+  function(seq)
+    table.insert(seq[1], seq[2])
+    return seq[1]
+  end)
 
-local parsed = p.parse(contents, Parsers.program)
-if not parsed.parser:succeeded() then
-  print(parsed.parser.error)
-  os.exit(1)
+
+-- Parse string
+Parsers.parseString = function(s, parser)
+  local parsed = p.parse(s, parser)
+  if not parsed.parser:succeeded() then
+    return nil, parsed.parser.error
+  end
+  return parsed.result, nil
 end
-p.dlog(parsed.result)
-os.exit(0)
+
+Parsers.parseProgramString = function(s)
+  return Parsers.parseString(s, Parsers.program)
+end
+
+
+-- debugging
+Parsers.dlog = p.dlog
+
+-- Main
+-- local file = io.open("sample.lua", "r")
+-- local contents
+-- if file then
+--   contents = file:read("*a")
+-- end
+-- local parsed = p.parse(contents, Parsers.program)
+-- if not parsed.parser:succeeded() then
+--   print(parsed.parser.error)
+--   os.exit(1)
+-- end
+-- p.dlog(parsed.result)
+-- os.exit(0)
+
+return Parsers
