@@ -267,4 +267,10 @@ function TestAnyLiterals()
   assertResult(parsed, { "[", "]", "(", ")", "{", "}" })
 end
 
+function TestSepBy()
+  local commaSep = parsel.sepBy(parsel.letter(), parsel.literal(","))
+  local parsed = parsel.parse("a,b,c,d", commaSep)
+  assertResult(parsed, { "a", "b", "c", "d" })
+end
+
 os.exit(lu.LuaUnit.run())
