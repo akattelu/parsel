@@ -123,7 +123,7 @@ Parser = {
   end,
 }
 
--- Entry point
+--- Entry point
 function M.parse(input, combinator)
   local p = Parser.new(input)
   return p:run(combinator)
@@ -368,6 +368,44 @@ function M.anyLiteral(...)
     table.insert(literalParsers, M.literal(l))
   end
   return M.any(table.unpack(literalParsers))
+end
+
+--- Match parsers delimited by successful parse of delim
+-- The result is a table containing just the parsed values (delimiter ignored)
+-- Fails if parsing a delimiter then parser fails, or if the first parsing of p fails
+-- @param p the parser to match repeatedly
+-- @param delim the parser to match as a delimiter
+-- @return a parser function
+function M.sepBy(p, delim)
+  return function(parser)
+    local parsed = parser:run(p)
+    if not parsed.parser:succeeded() then
+      return noMatch(parsed.parser, parsed.parser.error)
+    end
+    local tokens = {}
+    insertToken(tokens, parsed)
+    local results = { parsed.result }
+    local current = parsed
+
+    while true do
+      local afterDelim = current.parser:run(delim)
+      if not afterDelim.parser:succeeded() then
+        break
+      end
+
+      current = afterDelim.parser:run(p)
+      if not current.parser:succeeded() then
+        return noMatch(current.parser, current.parser.error)
+      end
+      insertToken(tokens, current)
+      table.insert(results, current.result)
+    end
+    return {
+      tokens = tokens,
+      result = results,
+      parser = current.parser,
+    }
+  end
 end
 
 return M

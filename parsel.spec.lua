@@ -271,6 +271,13 @@ function TestSepBy()
   local commaSep = parsel.sepBy(parsel.letter(), parsel.literal(","))
   local parsed = parsel.parse("a,b,c,d", commaSep)
   assertResult(parsed, { "a", "b", "c", "d" })
+  lu.assertEquals(parsed.parser.pos, 8)
+
+  parsed = parsel.parse("a,b,c,", commaSep)
+  assertErrContains(parsed, "out of bounds")
+
+  parsed = parsel.parse("a", commaSep)
+  assertResult(parsed, { "a" })
 end
 
 os.exit(lu.LuaUnit.run())
