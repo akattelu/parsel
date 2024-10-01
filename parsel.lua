@@ -1,8 +1,8 @@
---- Parsel: a parser combinator library for Lua
--- @module M
--- the base module
+--- a parser combinator library for Lua
 
-local M = {}
+-- holds parser combinator functions
+-- @module Parsel
+local Parsel = {}
 
 local function printTable(t)
   local printTable_cache = {}
@@ -47,7 +47,11 @@ local function noMatch(parser, error)
   }
 end
 
-M.nullResult = { type = "NULL" }
+
+--- a result indicating an optional match
+-- returned as a placeholder when an optional match did not succeed
+-- @see Parsel.optional
+Parsel.nullResult = { type = "NULL" }
 
 local Token = {
   new = function(match, startPos, endPos)
@@ -69,7 +73,7 @@ local function dlog(msg)
   end
 end
 
-M.dlog = dlog
+Parsel.dlog = dlog
 
 local function insertToken(t, result)
   if result.tokens then
@@ -79,21 +83,21 @@ local function insertToken(t, result)
   end
 end
 
-function M.printTokens(result, prefix)
-  if result.tokens then
-    for _, tok in ipairs(result.tokens) do
-      M.printTokens(tok, (prefix or "") .. "\t")
-    end
-  end
-  if type(result) == "table" then
-    for _, tok in ipairs(result) do
-      M.printTokens(tok, (prefix or "") .. "\t")
-    end
-  end
-  if result.match then
-    print(string.format("%sMatch: %s, [%d, %d]", prefix or "", result.match, result.startPos, result.endPos))
-  end
-end
+-- local function printTokens(result, prefix)
+--   if result.tokens then
+--     for _, tok in ipairs(result.tokens) do
+--       Parsel.printTokens(tok, (prefix or "") .. "\t")
+--     end
+--   end
+--   if type(result) == "table" then
+--     for _, tok in ipairs(result) do
+--       Parsel.printTokens(tok, (prefix or "") .. "\t")
+--     end
+--   end
+--   if result.match then
+--     print(string.format("%sMatch: %s, [%d, %d]", prefix or "", result.match, result.startPos, result.endPos))
+--   end
+-- end
 
 Parser = {
   new = function(input, pos, error)
@@ -123,14 +127,19 @@ Parser = {
   end,
 }
 
---- Entry point
-function M.parse(input, combinator)
+--- Entry point to parsing a string
+-- @param input the string to match
+-- @param parser to use on the string
+-- @return the result returned by the parser
+function Parsel.parse(input, parser)
   local p = Parser.new(input)
-  return p:run(combinator)
+  return p:run(parser)
 end
 
--- Parse any string literal
-function M.literal(lit)
+--- Parse any string literal
+-- @param lit the literal to match
+-- @return a parser function matching the literal
+function Parsel.literal(lit)
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local match = string.sub(parser.input, parser.pos, parser.pos + #lit - 1)
@@ -145,13 +154,17 @@ function M.literal(lit)
   end
 end
 
--- Try first parser, and if that fails, try the second parser
-function M.either(c1, c2)
-  return M.any(c1, c2)
+--- Try first parser, and if that fails, try the second parser
+-- @param p1 the first parser to try
+-- @param p2 the second parser to try
+-- @return a parser function
+function Parsel.either(p1, p2)
+  return Parsel.any(p1, p2)
 end
 
--- Parse any alphabetic letter
-function M.letter()
+--- Parse any alphabetic letter
+-- @return a parser function
+function Parsel.letter()
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local matched = string.match(string.sub(parser.input, parser.pos, parser.pos), "%a")
@@ -167,8 +180,9 @@ function M.letter()
   end
 end
 
--- Parse any digit
-function M.digit()
+--- Parse any digit
+-- @return a parser function
+function Parsel.digit()
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local matched = string.match(string.sub(parser.input, parser.pos, parser.pos), "%d")
@@ -184,10 +198,12 @@ function M.digit()
   end
 end
 
--- Parse a combinator at least one time and until the parse fails
-function M.oneOrMore(c)
+--- Parse a combinator at least one time and until the parse fails
+-- @param p the parser to attempt one or more times
+-- @return a parser function
+function Parsel.oneOrMore(p)
   return function(parser)
-    local result = parser:run(c)
+    local result = parser:run(p)
     if result.parser:succeeded() then
       local current
       local next = result
@@ -197,7 +213,7 @@ function M.oneOrMore(c)
         current = next
         insertToken(tokens, current)
         table.insert(results, current.result)
-        next = current.parser:run(c)
+        next = current.parser:run(p)
       until not next.parser:succeeded()
       return {
         tokens = tokens,
@@ -212,10 +228,13 @@ function M.oneOrMore(c)
   end
 end
 
--- Map the result of a parser
-function M.map(parserFn, mapFn)
+--- Map the result of a parser
+-- @param base parser to run and map the result of
+-- @param mapFn function to apply to the result of the parser operation
+-- @return a new parser function with a mapped result
+function Parsel.map(base, mapFn)
   return function(parser)
-    local after = parserFn(parser)
+    local after = base(parser)
     if after.parser:succeeded() then
       after.result = mapFn(after.result)
     end
@@ -223,8 +242,10 @@ function M.map(parserFn, mapFn)
   end
 end
 
--- Parse any combinators specified in the list
-function M.any(...)
+--- Parse any combinators specified in the list
+-- @param ... a list of required parsers to parse in attempt in order
+-- @return a combined parser function
+function Parsel.any(...)
   local combinators = table.pack(...)
   return function(parser)
     for _, c in ipairs(combinators) do
@@ -239,8 +260,10 @@ function M.any(...)
   end
 end
 
--- Parse all combinators in sequence
-function M.seq(...)
+--- Parse all combinators in sequence
+-- @param ... a list of required parsers to parse in sequence
+-- @return a combined parser function
+function Parsel.seq(...)
   local combinators = table.pack(...)
 
   return function(parser)
@@ -263,10 +286,12 @@ function M.seq(...)
   end
 end
 
--- Parse zero or more instances of combinators
-function M.zeroOrMore(c)
+--- Parse zero or more instances of combinators
+-- @param p the parser to attempt zero or more times
+-- @return a parser function
+function Parsel.zeroOrMore(p)
   return function(parser)
-    local result = parser:run(c)
+    local result = parser:run(p)
     if result.parser:succeeded() then
       local tokens = {}
       insertToken(tokens, result)
@@ -274,7 +299,7 @@ function M.zeroOrMore(c)
       local currentParser = result.parser
 
       while true do
-        local nextResult = currentParser:run(c)
+        local nextResult = currentParser:run(p)
         if not nextResult.parser:succeeded() then
           break
         else
@@ -300,24 +325,28 @@ function M.zeroOrMore(c)
   end
 end
 
--- Optionally parse a combinator, return parsel.nullResult() if not matched
-function M.optional(c)
+--- Optionally parse a combinator, return Parsel.nullResult if not matched
+-- @param p parser to attempt, if failed, nullResult will be returned
+-- @return a parser function
+-- @see Parsel.nullResult
+function Parsel.optional(p)
   return function(parser)
-    local result = parser:run(c)
+    local result = parser:run(p)
     if result.parser:succeeded() then
       return result
     else
       return {
-        token = M.nullResult,
+        token = Parsel.nullResult,
         parser = parser,
-        result = M.nullResult,
+        result = Parsel.nullResult,
       }
     end
   end
 end
 
--- Match any single character
-function M.char()
+--- Match any single character
+-- @return a parser function that matches any character
+function Parsel.char()
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local match = string.sub(parser.input, parser.pos, parser.pos)
@@ -329,8 +358,10 @@ function M.char()
   end
 end
 
--- Match anything but the specified literal single character
-function M.literalBesides(char)
+--- Match anything but the specified literal single character
+-- @param char character to exclude
+-- @return a parser function that matches any character besides char
+function Parsel.literalBesides(char)
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local match = string.sub(parser.input, parser.pos, parser.pos)
@@ -346,39 +377,46 @@ function M.literalBesides(char)
   end
 end
 
--- Match single newline char
-function M.newline()
-  return M.literal("\n")
+--- Match single newline char
+-- @return a parser function that matches a newline character
+function Parsel.newline()
+  return Parsel.literal("\n")
 end
 
--- Match optional whitespace
-function M.optionalWhitespace()
-  return M.optional(M.oneOrMore(M.any(M.literal(" "), M.literal("\t"), M.newline())))
+--- Match optional whitespace
+-- Optionally matches and consumes spaces, tabs and newlines
+-- @return a parser function
+function Parsel.optionalWhitespace()
+  return Parsel.optional(Parsel.oneOrMore(Parsel.any(Parsel.literal(" "), Parsel.literal("\t"), Parsel.newline())))
 end
 
--- Returns a combinator that lazily evaluates func (func should return a parser)
-function M.lazy(f)
+--- Returns a parser that lazily evaluates a function
+-- @param f func (must return a parser)
+-- @return a parser function
+function Parsel.lazy(f)
   return function(parser)
     return parser:run(f())
   end
 end
 
--- Match any literal passed in, succeeds with the match
-function M.anyLiteral(...)
+--- Match any literal passed in, succeeds with the match
+-- @param ... a sequence of literals to try in order
+-- @return a parser function that matches any of the literals
+function Parsel.anyLiteral(...)
   local literalParsers = {}
   for _, l in ipairs(table.pack(...)) do
-    table.insert(literalParsers, M.literal(l))
+    table.insert(literalParsers, Parsel.literal(l))
   end
-  return M.any(table.unpack(literalParsers))
+  return Parsel.any(table.unpack(literalParsers))
 end
 
 --- Match parsers delimited by successful parse of delim
--- The result is a table containing just the parsed values (delimiter ignored)
--- Fails if parsing a delimiter then parser fails, or if the first parsing of p fails
+-- the result is a table containing just the parsed values (delimiter ignored)
+-- fails if parsing a delimiter then parser fails, or if the first parsing of p fails
 -- @param p the parser to match repeatedly
 -- @param delim the parser to match as a delimiter
 -- @return a parser function
-function M.sepBy(p, delim)
+function Parsel.sepBy(p, delim)
   return function(parser)
     local parsed = parser:run(p)
     if not parsed.parser:succeeded() then
@@ -410,4 +448,4 @@ function M.sepBy(p, delim)
   end
 end
 
-return M
+return Parsel
