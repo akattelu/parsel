@@ -84,7 +84,7 @@ Parsers.notExpression = p.map(
 Parsers.infixExpression = p.map(
   p.seq(Parsers.baseExpression,
     p.optionalWhitespace(),
-    p.anyLiteral("+", "-", "^", "*", "==", "~=", "^", "."),
+    p.anyLiteral("+", "-", "/", "*", "==", "~=", "^"),
     p.optionalWhitespace(),
     Parsers.expression
   ), function(seq)

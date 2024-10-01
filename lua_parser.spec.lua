@@ -31,6 +31,17 @@ local function assertNilValue(tree)
   lu.assertEquals(tree.value, nil)
 end
 
+local function assertInfixNumbers(tree, lhs, op, rhs)
+  lu.assertEquals(tree.op, op)
+  assertNumber(tree.lhs, lhs)
+  assertNumber(tree.rhs, rhs)
+end
+
+local function assertInfixBools(tree, lhs, op, rhs)
+  lu.assertEquals(tree.op, op)
+  assertBool(tree.lhs, lhs)
+  assertBool(tree.rhs, rhs)
+end
 function TestDeclaration()
   local tree, err = p.parseProgramString("local x")
   lu.assertNil(err)
@@ -103,6 +114,30 @@ function TestParenthesized()
   assertNumber(tree[4].rhs.lhs, 2)
   lu.assertEquals(tree[4].rhs.op, '+')
   assertNumber(tree[4].rhs.rhs, 3)
+end
+
+function TestInfix()
+  local tree, err = p.parseProgramString([[
+    1 + 2
+    3 - 4
+    123 * 456
+    1 / 2
+    3^4
+    true == true
+    false ~= true
+    1 + (2 + 3)]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 8)
+  assertInfixNumbers(tree[1], 1, "+", 2)
+  assertInfixNumbers(tree[2], 3, "-", 4)
+  assertInfixNumbers(tree[3], 123, "*", 456)
+  assertInfixNumbers(tree[4], 1, "/", 2)
+  assertInfixNumbers(tree[5], 3, "^", 4)
+  assertInfixBools(tree[6], true, "==", true)
+  assertInfixBools(tree[7], false, "~=", true)
+  assertNumber(tree[8].lhs, 1)
+  lu.assertEquals(tree[8].op, "+")
+  assertInfixNumbers(tree[8].rhs, 2, "+", 3)
 end
 
 os.exit(lu.LuaUnit.run())
