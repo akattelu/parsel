@@ -3,7 +3,6 @@ local p = require 'lua_parser'
 
 
 local function assertTree(tree, err, expected)
-  print(tree, err, expected)
   lu.assertNil(err)
   lu.assertEquals(tree.type, expected.type)
 end
@@ -34,8 +33,7 @@ function TestDeclaration()
 end
 
 function TestAssignment()
-  local tree, err = p.parseProgramString([[
-    local x = 2
+  local tree, err = p.parseProgramString([[local x = 2
     y = 5]])
   lu.assertNil(err)
   if tree then

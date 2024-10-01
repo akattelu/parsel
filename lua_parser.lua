@@ -120,11 +120,7 @@ Parsers.assignment =
 Parsers.statement = p.any(Parsers.assignment, Parsers.declaration, Parsers.expressionStatement)
 
 -- Program
-Parsers.program = p.map(p.seq(p.zeroOrMore(p.map(p.seq(Parsers.statement, p.newline()), pick(1))), Parsers.statement),
-  function(seq)
-    table.insert(seq[1], seq[2])
-    return seq[1]
-  end)
+Parsers.program = p.map(p.seq(p.optionalWhitespace(), p.sepBy(Parsers.statement, p.oneOrMore(p.newline()))), pick(2))
 
 
 -- Parse string
