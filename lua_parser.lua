@@ -8,7 +8,8 @@ local pick = function(n)
 end
 
 local keywords = {
-  "if", "else", "then", "elseif", "return", "local", "function", "while", "for", "do", "in", "repeat", "until", "while",
+  "if", "else", "then", "end", "elseif", "return", "local", "function", "while", "for", "do", "in", "repeat", "until",
+  "while",
   "true", "false", "nil"
 }
 
@@ -110,8 +111,10 @@ Parsers.ifStmt = p.map(
     p.optionalWhitespace(),
     p.literal("then"),
     p.optionalWhitespace(),
-    p.lazy(function() return Parsers.program end),
-    -- p.optionalWhitespace(),
+    p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), p.optionalWhitespace()), pick(1))),
+    -- p.zeroOrMore(p.map(
+    --   p.seq(p.optionalWhitespace(), p.lazy(function() return Parsers.statement end), p.optionalWhitespace()), pick(2))),
+    p.optionalWhitespace(),
     p.literal("end")
   ), function(seq)
     return {
@@ -154,11 +157,7 @@ Parsers.assignment =
 Parsers.statement = p.any(Parsers.assignment, Parsers.declaration, Parsers.ifStmt, Parsers.expressionStatement)
 
 -- Program
--- TODO: fix so that you can have new lines at the end of the program
-Parsers.program = p.map(
-  p.seq(p.optionalWhitespace(), p.sepBy(Parsers.statement, p.oneOrMore(p.seq(p.newline(), p.optionalWhitespace()))),
-    p.optionalWhitespace()), pick(2))
-
+Parsers.program = p.oneOrMore(p.map(p.seq(p.optionalWhitespace(), Parsers.statement, p.optionalWhitespace()), pick(2)))
 
 -- Parse string
 Parsers.parseString = function(s, parser)

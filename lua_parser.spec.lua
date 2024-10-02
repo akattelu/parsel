@@ -149,7 +149,8 @@ function TestInfix()
     true == true
     false ~= true
     1 + (2 + 3)
-    1 + (2 + 3) + 4]])
+    1 + (2 + 3) + 4
+  ]])
   lu.assertNil(err)
   lu.assertEquals(#tree, 9)
   for _, v in ipairs(tree) do
@@ -174,20 +175,26 @@ end
 function TestIfThenStmt()
   local tree, err = p.parseProgramString([[
       if true == true then local x = 1 end
-
       if true == true then
         local x = 1
-      end]])
+        local y = 2
+      end
+      if true then end
+      ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 2)
+  lu.assertEquals(#tree, 3)
   assertType(tree[1], "conditional")
   assertInfixBools(tree[1].cond, true, "==", true)
   assertAssignmentNumber(tree[1].then_block[1], "x", 1)
 
-  p.dlog(tree[2])
   assertType(tree[2], "conditional")
   assertInfixBools(tree[2].cond, true, "==", true)
   assertAssignmentNumber(tree[2].then_block[1], "x", 1)
+  assertAssignmentNumber(tree[2].then_block[2], "y", 2)
+
+  assertType(tree[3], "conditional")
+  assertBool(tree[3].cond, true)
+  lu.assertEquals(tree[3].then_block, {})
 end
 
 os.exit(lu.LuaUnit.run())
