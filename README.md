@@ -59,10 +59,10 @@ p.lazy(func) -- returns a combinator that lazily evaluates func (func should ret
 [ ] else 
 [ ] tables
 [ ] access operations
-[ ] comments
 [ ] function calls
 [ ] method access syntax
 [ ] table assignment
+[x] comments
 [x] comparison operators
 [x] concat operator
 [x] blockstrings

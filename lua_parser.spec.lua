@@ -32,6 +32,7 @@ local function assertNilValue(tree)
 end
 
 local function assertInfixNumbers(tree, lhs, op, rhs)
+  assertType(tree, "infix_expression")
   lu.assertEquals(tree.op, op)
   assertNumber(tree.lhs, lhs)
   assertNumber(tree.rhs, rhs)
@@ -367,6 +368,24 @@ function TestLocalFunction()
   lu.assertEquals(tree[1].args, { "arg1" })
   lu.assertEquals(tree[1].block, {})
   lu.assertEquals(tree[1].scope, "LOCAL")
+end
+
+function TestLineComments()
+  local tree, err = p.parseProgramString([[
+    --comment1
+    --comment2
+    local x = 4--comment3
+    local y--comment4
+    = 4-- comment5--comment6
+-- comment7
+
+    return 1 + 2 -- test
+]])
+  p.dlog(tree)
+  lu.assertNil(err)
+  assertAssignmentNumber(tree[1], "x", 4)
+  assertAssignmentNumber(tree[2], "y", 4)
+  assertInfixNumbers(tree[3].value, 1, "+", 2)
 end
 
 os.exit(lu.LuaUnit.run())

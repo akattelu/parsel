@@ -30,8 +30,22 @@ end
 
 
 -- Helper smaller parsers
-local ws = p.whitespace()
-local ows = p.optionalWhitespace()
+local lineComment = p.map(
+  p.oneOrMore(p.seq(p.optionalWhitespace(), p.literal('--'), p.untilLiteral("\n"), p.optionalWhitespace())),
+  function(val)
+    return {
+      type = "comment",
+      value = val
+    }
+  end)
+local ws = p.either(
+  lineComment,
+  p.whitespace()
+)
+local ows = p.either(
+  lineComment,
+  p.optionalWhitespace()
+)
 local block = p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), ows), pick(1)))
 local argParser = p.map(p.lazy(function() return Parsers.ident end), function(i) return i.value end)
 local nameWithDots = p.map(p.sepBy(p.lazy(function() return Parsers.ident end), p.literal(".")), function(seq)
@@ -92,11 +106,15 @@ Parsers.expression = p.any(
   Parsers.baseExpression
 )
 Parsers.prefixExpression = p.map(
-  p.seq(
+  p.exclude(p.seq(
     p.anyLiteral("-"),
+    ows,
     Parsers.expression
   ), function(seq)
-    return { type = "prefix_expression", op = seq[1], rhs = seq[2] }
+    return false
+    -- return seq[3].type == "prefix_expression" and seq[3].op == "-"
+  end), function(seq)
+    return { type = "prefix_expression", op = seq[1], rhs = seq[3] }
   end)
 Parsers.notExpression = p.map(
   p.seq(
@@ -108,12 +126,14 @@ Parsers.notExpression = p.map(
   end
 )
 Parsers.infixExpression = p.map(
-  p.seq(Parsers.baseExpression,
+  p.exclude(p.seq(Parsers.baseExpression,
     ows,
     p.anyLiteral("+", "-", "/", "*", "==", "~=", "^", "or", "and", "..", ">=", "<=", ">", "<"),
     ows,
     Parsers.expression
   ), function(seq)
+    return seq[3] == "-" and seq[5].type == "prefix_expression" and seq[5].op == "-"
+  end), function(seq)
     return { type = "infix_expression", lhs = seq[1], op = seq[3], rhs = seq[5] }
   end)
 
@@ -264,7 +284,8 @@ Parsers.functionStmt = p.map(
   end)
 
 Parsers.statement = p.any(
-  Parsers.assignment
+  lineComment
+  , Parsers.assignment
   , Parsers.declaration
   , Parsers.ifStmt
   , Parsers.whileStmt
@@ -281,10 +302,10 @@ Parsers.program = p.oneOrMore(p.map(p.seq(ows, Parsers.statement, ows), pick(2))
 Parsers.parseString = function(s, parser)
   local parsed = p.parse(s, parser)
   if not parsed.parser:succeeded() then
-    return nil, parsed.parser.error
+    return parsed.result, parsed.parser.error
   end
   if (parsed.parser.pos - 1) ~= #s then
-    return nil, "did not complete entire string"
+    return parsed.result, "did not complete entire string"
   end
   return parsed.result, nil
 end
