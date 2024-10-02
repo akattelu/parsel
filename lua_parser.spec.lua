@@ -247,4 +247,42 @@ function TestRepeatStmt()
   lu.assertEquals(tree[3].block, {})
 end
 
+function TestReturn()
+  local tree, err = p.parseString([[return 1 + 2]], Parser.returnStmt)
+  lu.assertNil(err)
+  assertType(tree, "return")
+  assertInfixNumbers(tree.value, 1, "+", 2)
+end
+
+function TestFunction()
+  local tree, err = p.parseProgramString([[
+      function() local x = 1 + 2 end
+
+      function name()
+        local x = 1
+        local y = 1
+        return x + y
+      end
+
+      function name() end
+     ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 3)
+
+  assertType(tree[1], "function")
+  lu.assertNil(tree[1].name)
+  assertInfixNumbers(tree[1].block[1], 1, "+", 2)
+
+  assertType(tree[2], "function")
+  lu.assertEquals(tree[2].name, "name")
+  assertAssignmentNumber(tree[2].block[1], "x", 1)
+  assertAssignmentNumber(tree[2].block[2], "y", 1)
+  assertType(tree[2].block[2], "return")
+  assertInfixNumbers(tree[2].block[2].value, "x", "y")
+
+  assertType(tree[3], "function")
+  lu.assertEquals(tree[3].name, "name")
+  lu.assertEquals(tree[3].block, {})
+end
+
 os.exit(lu.LuaUnit.run())
