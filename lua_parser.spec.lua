@@ -50,16 +50,17 @@ local function assertAssignmentNumber(tree, ident, numVal, scope)
   lu.assertEquals(tree.scope, scope or "LOCAL")
 end
 
+function TestIdent()
+  local _, err = p.parseString("if", p.ident)
+  lu.assertStrContains(err, "ignore condition was true after parsing")
+end
+
 function TestDeclaration()
   local tree, err = p.parseProgramString("local x")
   lu.assertNil(err)
-  if tree and tree[1] then
-    assertType(tree[1], "declaration")
-    lu.assertEquals(tree[1].scope, "LOCAL")
-    assertIdentifier(tree[1].identifier, "x")
-  else
-    lu.fail("tree was nil")
-  end
+  assertType(tree[1], "declaration")
+  lu.assertEquals(tree[1].scope, "LOCAL")
+  assertIdentifier(tree[1].identifier, "x")
 end
 
 function TestAssignment()
@@ -121,13 +122,13 @@ function TestNotExpr()
   lu.assertEquals(#tree, 2)
   assertBool(tree[1].rhs, true)
   lu.assertEquals(tree[1].op, "not")
-  lu.assertEquals(tree[1].type, "prefix_expression")
+  assertType(tree[1], "prefix_expression")
 
   assertBool(tree[2].rhs.rhs, true)
   lu.assertEquals(tree[2].op, "not")
   lu.assertEquals(tree[2].rhs.op, "not")
-  lu.assertEquals(tree[2].type, "prefix_expression")
-  lu.assertEquals(tree[2].rhs.type, "prefix_expression")
+  assertType(tree[2], "prefix_expression")
+  assertType(tree[2].rhs, "prefix_expression")
 end
 
 function TestPrefixExpression()
@@ -152,7 +153,7 @@ function TestInfix()
   lu.assertNil(err)
   lu.assertEquals(#tree, 9)
   for _, v in ipairs(tree) do
-    lu.assertEquals(v.type, "infix_expression")
+    assertType(v, "infix_expression")
   end
   assertInfixNumbers(tree[1], 1, "+", 2)
   assertInfixNumbers(tree[2], 3, "-", 4)
@@ -179,12 +180,12 @@ function TestIfThenStmt()
       end]])
   lu.assertNil(err)
   lu.assertEquals(#tree, 2)
-  lu.assertEquals(tree[1].type, "conditional")
+  assertType(tree[1], "conditional")
   assertInfixBools(tree[1].cond, true, "==", true)
   assertAssignmentNumber(tree[1].then_block[1], "x", 1)
 
   p.dlog(tree[2])
-  lu.assertEquals(tree[2].type, "conditional")
+  assertType(tree[2], "conditional")
   assertInfixBools(tree[2].cond, true, "==", true)
   assertAssignmentNumber(tree[2].then_block[1], "x", 1)
 end

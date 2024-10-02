@@ -7,6 +7,21 @@ local pick = function(n)
   end
 end
 
+local keywords = {
+  "if", "else", "then", "elseif", "return", "local", "function", "while", "for", "do", "in", "repeat", "until", "while",
+  "true", "false", "nil"
+}
+
+local function isKeyword(word)
+  for _, v in ipairs(keywords) do
+    if v == word then
+      return true
+    end
+  end
+
+  return false
+end
+
 local Parsers = {}
 
 -- Keywords
@@ -14,8 +29,10 @@ Parsers.localDecl = p.map(p.literal("local"), function(_) return { type = "keywo
 Parsers.equals = p.map(p.literal("="), function(_) return { type = "equals", value = "=" } end)
 
 -- Primitives
-Parsers.ident = p.map(p.seq(p.letter(), p.zeroOrMore(p.either(p.letter(), p.digit()))),
-  function(tokens) return { type = "identifier", value = tokens[1] .. table.concat(tokens[2], "") } end)
+Parsers.ident = p.exclude(p.map(p.seq(p.letter(), p.zeroOrMore(p.either(p.letter(), p.digit()))),
+  function(tokens) return { type = "identifier", value = tokens[1] .. table.concat(tokens[2], "") } end), function(n)
+  return isKeyword(n.value)
+end)
 Parsers.int = p.map(p.oneOrMore(p.digit()),
   function(digList) return { type = "number", value = tonumber(table.concat(digList, "")) } end)
 Parsers.float = p.map(p.seq(Parsers.int, p.literal("."), Parsers.int),
