@@ -291,4 +291,28 @@ function TestExclude()
   lu.assertEquals(parsed.parser.pos, 1)
 end
 
+function TestUntil()
+  local untilEnd = parsel.untilLiteral("end")
+  local parsed = parsel.parse('if true then else end', untilEnd)
+  assertTok(parsed, "if true then else ", 1, 18)
+  assertResult(parsed, 'if true then else ')
+  lu.assertEquals(parsed.parser.pos, 19)
+
+  -- check the end pos is right
+  local parsedEnd = parsed.parser:run(parsel.literal('end'))
+  assertTok(parsedEnd, "end")
+  assertResult(parsedEnd, "end")
+
+  parsed = parsel.parse('if true then else something else', untilEnd)
+  assertTok(parsed, "if true then else something else", 1, 32)
+  assertResult(parsed, 'if true then else something else')
+  lu.assertEquals(parsed.parser.pos, 32)
+
+  parsed = parsel.parse('if true then else end', parsel.literal("if true "))
+  parsed = parsed.parser:run(untilEnd)
+  assertTok(parsed, "then else ", 9, 18)
+  assertResult(parsed, 'then else ')
+  lu.assertEquals(parsed.parser.pos, 19)
+end
+
 os.exit(lu.LuaUnit.run())

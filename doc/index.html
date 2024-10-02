@@ -130,6 +130,10 @@
 	<td class="name" nowrap><a href="#Parsel.exclude">Parsel.exclude (p, exclusionFunc)</a></td>
 	<td class="summary">Fails a parser if it matches condition set by exclusionFunc</td>
 	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Parsel.untilLiteral">Parsel.untilLiteral (literal)</a></td>
+	<td class="summary">Match the parsers string until the specified literal is found</td>
+	</tr>
 </table>
 <h2><a href="#Tables">Tables</a></h2>
 <table class="function_list">
@@ -620,6 +624,37 @@
 <span class="keyword">local</span> evenString = parsel.<span class="function-name">oneOrMore</span>(ignoreOdd)
 <span class="global">table</span>.<span class="function-name">concat</span>(parsel.<span class="function-name">parse</span>(<span class="string">"2468"</span>).result, <span class="string">""</span>)
  <span class="comment">-- 246</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Parsel.untilLiteral"></a>
+    <strong>Parsel.untilLiteral (literal)</strong>
+    </dt>
+    <dd>
+    Match the parsers string until the specified literal is found
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">literal</span>
+         the literal to match until
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        a parser function matched until right before the literal is found or end of string
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example"><span class="keyword">local</span> untilEnd = parsel.<span class="function-name">untilLiteral</span>(<span class="string">'end'</span>)
+parsel.<span class="function-name">parse</span>(<span class="string">"if then end"</span>).result
+ <span class="comment">-- "if then "</span></pre>
     </ul>
 
 </dd>

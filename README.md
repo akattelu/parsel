@@ -66,3 +66,4 @@ p.lazy(func) -- returns a combinator that lazily evaluates func (func should ret
 [x] concat operator
 [ ] local functions
 [ ] table assignment
+[ ] comparison operators

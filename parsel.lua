@@ -476,4 +476,39 @@ function Parsel.exclude(p, exclusionFunc)
   end
 end
 
+--- Match the parsers string until the specified literal is found
+-- @param literal the literal to match until
+-- @return a parser function matched until right before the literal is found or end of string
+-- @usage
+--local untilEnd = parsel.untilLiteral('end')
+--parsel.parse("if then end").result
+-- -- "if then "
+function Parsel.untilLiteral(literal)
+  return function(parser)
+    local start = parser.pos
+    local stride = #literal - 1
+    local strEnd = #parser.input - stride
+
+    for i = start, strEnd, 1 do
+      local slice = string.sub(parser.input, i, i + stride)
+      if slice == literal then
+        local capture = string.sub(parser.input, start, i - 1)
+        return {
+          token = Token.new(capture, start, i - 1),
+          result = capture,
+          parser = parser:advance(i - start)
+        }
+      end
+    end
+
+    local inputLen = #parser.input
+    local capture = string.sub(parser.input, start, inputLen)
+    return {
+      token = Token.new(capture, start, inputLen),
+      parser = parser:advance(inputLen - start),
+      result = capture
+    }
+  end
+end
+
 return Parsel
