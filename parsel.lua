@@ -83,22 +83,6 @@ local function insertToken(t, result)
   end
 end
 
--- local function printTokens(result, prefix)
---   if result.tokens then
---     for _, tok in ipairs(result.tokens) do
---       Parsel.printTokens(tok, (prefix or "") .. "\t")
---     end
---   end
---   if type(result) == "table" then
---     for _, tok in ipairs(result) do
---       Parsel.printTokens(tok, (prefix or "") .. "\t")
---     end
---   end
---   if result.match then
---     print(string.format("%sMatch: %s, [%d, %d]", prefix or "", result.match, result.startPos, result.endPos))
---   end
--- end
-
 Parser = {
   new = function(input, pos, error)
     return {
