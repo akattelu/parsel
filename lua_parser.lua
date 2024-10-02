@@ -264,9 +264,9 @@ Parsers.parseString = function(s, parser)
   if not parsed.parser:succeeded() then
     return nil, parsed.parser.error
   end
-  -- if parsed.parser.pos ~= #s then
-  --   return nil, "did not complete entire string"
-  -- end
+  if (parsed.parser.pos - 1) ~= #s then
+    return nil, "did not complete entire string"
+  end
   return parsed.result, nil
 end
 
