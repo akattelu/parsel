@@ -9,7 +9,7 @@ local Parsers = {}
 --- Check if word is a lua keyword
 local function isKeyword(word)
   local keywords = {
-    "if", "else", "then", "end", "elseif", "return", "local", "function", "while", "for", "do", "in",
+    "or", "and", "if", "else", "then", "end", "elseif", "return", "local", "function", "while", "for", "do", "in",
     "repeat", "until", "while", "true", "false", "nil"
   }
   for _, v in ipairs(keywords) do
@@ -32,7 +32,7 @@ end
 -- Helper smaller parsers
 local block = p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), p.optionalWhitespace()), pick(1)))
 local argParser = p.map(p.lazy(function() return Parsers.ident end), function(i) return i.value end)
-local nameWithDots = p.map(p.sepBy(Parsers.ident, p.literal(".")), function(seq)
+local nameWithDots = p.map(p.sepBy(p.lazy(function() return Parsers.ident end), p.literal(".")), function(seq)
   local values = {}
   for _, v in ipairs(seq) do
     table.insert(values, v.value)
@@ -103,7 +103,7 @@ Parsers.notExpression = p.map(
 Parsers.infixExpression = p.map(
   p.seq(Parsers.baseExpression,
     p.optionalWhitespace(),
-    p.anyLiteral("+", "-", "/", "*", "==", "~=", "^"),
+    p.anyLiteral("+", "-", "/", "*", "==", "~=", "^", "or", "and"),
     p.optionalWhitespace(),
     Parsers.expression
   ), function(seq)
@@ -238,11 +238,9 @@ Parsers.functionStmt = p.map(
     , nameWithDots
     , p.optionalWhitespace()
     , p.any(
-      p.map(p.literal("()"), function(_) return {} end)                                                               -- no args
-      ,
-      p.map(p.literal("(...)"), function(_) return { "..." } end)                                                     -- variadic
-      ,
-      p.map(p.seq(p.literal("("), p.sepBy(argParser, p.seq(p.literal(','), p.optionalWhitespace())), p.literal(")")), -- multiple args
+      p.map(p.literal("()"), function(_) return {} end),
+      p.map(p.literal("(...)"), function(_) return { "..." } end),
+      p.map(p.seq(p.literal("("), p.sepBy(argParser, p.seq(p.literal(','), p.optionalWhitespace())), p.literal(")")),
         pick(2)))
     , p.optionalWhitespace()
     , block

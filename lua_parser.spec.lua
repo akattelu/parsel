@@ -150,9 +150,11 @@ function TestInfix()
     false ~= true
     1 + (2 + 3)
     1 + (2 + 3) + 4
+    true and true
+    false or true
   ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 9)
+  lu.assertEquals(#tree, 11)
   for _, v in ipairs(tree) do
     assertType(v, "infix_expression")
   end
@@ -170,6 +172,8 @@ function TestInfix()
   lu.assertEquals(tree[9].rhs.op, "+")
   assertInfixNumbers(tree[9].rhs.lhs, 2, "+", 3)
   assertNumber(tree[9].rhs.rhs, 4)
+  assertInfixBools(tree[10], true, "and", true)
+  assertInfixBools(tree[11], false, "or", true)
 end
 
 function TestIfThenStmt()

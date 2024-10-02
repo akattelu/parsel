@@ -58,7 +58,7 @@ p.lazy(func) -- returns a combinator that lazily evaluates func (func should ret
 [ ] else 
 [ ] tables
 [ ] access operations
-[ ] and/or infix
+[x] and/or infix
 [ ] comments
 [ ] blockstrings
 [ ] single quote strings
