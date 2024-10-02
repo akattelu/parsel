@@ -197,4 +197,29 @@ function TestIfThenStmt()
   lu.assertEquals(tree[3].then_block, {})
 end
 
+function TestWhileStmt()
+  local tree, err = p.parseProgramString([[
+      while true do 1 + 2 end
+
+      while false do
+        local x = 1
+      end
+
+      while true do end
+     ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 3)
+  assertType(tree[1], "while")
+  assertBool(tree[1].cond, true)
+  assertInfixNumbers(tree[1].block[1], 1, "+", 2)
+
+  assertType(tree[2], "while")
+  assertBool(tree[2].cond, false)
+  assertAssignmentNumber(tree[2].block[1], "x", 1)
+
+  assertType(tree[3], "while")
+  assertBool(tree[3].cond, true)
+  lu.assertEquals(tree[3].block, {})
+end
+
 os.exit(lu.LuaUnit.run())

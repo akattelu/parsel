@@ -94,10 +94,7 @@ Parsers.infixExpression = p.map(
   end)
 
 -- Statements
-Parsers.expressionStatement = p.map(Parsers.expression, function(e)
-  -- Parsers.dlog(e)
-  return e
-end)
+Parsers.expressionStatement = Parsers.expression
 Parsers.ifStmt = p.map(
   p.seq(
     p.literal("if"),
@@ -107,8 +104,6 @@ Parsers.ifStmt = p.map(
     p.literal("then"),
     p.optionalWhitespace(),
     p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), p.optionalWhitespace()), pick(1))),
-    -- p.zeroOrMore(p.map(
-    --   p.seq(p.optionalWhitespace(), p.lazy(function() return Parsers.statement end), p.optionalWhitespace()), pick(2))),
     p.optionalWhitespace(),
     p.literal("end")
   ), function(seq)
@@ -118,8 +113,26 @@ Parsers.ifStmt = p.map(
       then_block = seq[7],
       else_block = nil
     }
-  end
-)
+  end)
+Parsers.whileStmt = p.map(
+  p.seq(
+    p.literal("while"),
+    p.optionalWhitespace(),
+    Parsers.expression,
+    p.optionalWhitespace(),
+    p.literal("do"),
+    p.optionalWhitespace(),
+    p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), p.optionalWhitespace()), pick(1))),
+    p.optionalWhitespace(),
+    p.literal("end")
+  ), function(seq)
+    return {
+      type = "while",
+      cond = seq[3],
+      block = seq[7],
+    }
+  end)
+
 Parsers.declaration = p.map(
   p.seq(p.literal("local"), p.optionalWhitespace(), Parsers.ident),
   function(seq)
@@ -149,7 +162,8 @@ Parsers.assignment =
         }
       end)
 
-Parsers.statement = p.any(Parsers.assignment, Parsers.declaration, Parsers.ifStmt, Parsers.expressionStatement)
+Parsers.statement = p.any(Parsers.assignment, Parsers.declaration, Parsers.ifStmt, Parsers.whileStmt,
+  Parsers.expressionStatement)
 
 -- Program
 Parsers.program = p.oneOrMore(p.map(p.seq(p.optionalWhitespace(), Parsers.statement, p.optionalWhitespace()), pick(2)))
