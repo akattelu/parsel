@@ -222,4 +222,29 @@ function TestWhileStmt()
   lu.assertEquals(tree[3].block, {})
 end
 
+function TestRepeatStmt()
+  local tree, err = p.parseProgramString([[
+      repeat 1 + 2 until false
+
+      repeat
+        local x = 1
+      until x
+
+      repeat until false
+     ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 3)
+  assertType(tree[1], "repeat")
+  assertBool(tree[1].cond, false)
+  assertInfixNumbers(tree[1].block[1], 1, "+", 2)
+
+  assertType(tree[2], "repeat")
+  assertIdentifier(tree[2].cond, 'x')
+  assertAssignmentNumber(tree[2].block[1], "x", 1)
+
+  assertType(tree[3], "repeat")
+  assertBool(tree[3].cond, false)
+  lu.assertEquals(tree[3].block, {})
+end
+
 os.exit(lu.LuaUnit.run())

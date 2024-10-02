@@ -133,6 +133,22 @@ Parsers.whileStmt = p.map(
     }
   end)
 
+Parsers.repeatStmt = p.map(
+  p.seq(
+    p.literal("repeat"),
+    p.optionalWhitespace(),
+    p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), p.optionalWhitespace()), pick(1))),
+    p.optionalWhitespace(),
+    p.literal("until"),
+    p.optionalWhitespace(),
+    Parsers.expression
+  ), function(seq)
+    return {
+      type = "repeat",
+      cond = seq[7],
+      block = seq[3],
+    }
+  end)
 Parsers.declaration = p.map(
   p.seq(p.literal("local"), p.optionalWhitespace(), Parsers.ident),
   function(seq)
@@ -162,7 +178,7 @@ Parsers.assignment =
         }
       end)
 
-Parsers.statement = p.any(Parsers.assignment, Parsers.declaration, Parsers.ifStmt, Parsers.whileStmt,
+Parsers.statement = p.any(Parsers.assignment, Parsers.declaration, Parsers.ifStmt, Parsers.whileStmt, Parsers.repeatStmt,
   Parsers.expressionStatement)
 
 -- Program
