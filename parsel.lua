@@ -50,6 +50,7 @@ end
 
 --- a result indicating an optional match
 -- returned as a placeholder when an optional match did not succeed
+-- @field type always "NULL"
 -- @see Parsel.optional
 Parsel.nullResult = { type = "NULL" }
 
@@ -120,6 +121,23 @@ function Parsel.parse(input, parser)
   return p:run(parser)
 end
 
+--- Map the result of a parser
+-- @param base parser to run and map the result of
+-- @param mapFn function to apply to the result of the parser operation
+-- @return a new parser function with a mapped result
+function Parsel.map(base, mapFn)
+  return function(parser)
+    local after = base(parser)
+    if after.parser:succeeded() then
+      after.result = mapFn(after.result)
+    end
+    return after
+  end
+end
+
+--- Base parsers
+-- @section parsers
+
 --- Parse any string literal
 -- @param lit the literal to match
 -- @return a parser function matching the literal
@@ -136,14 +154,6 @@ function Parsel.literal(lit)
     end
     return noMatch(parser, string.format("%s did not contain %s at position %d", parser.input, lit, parser.pos))
   end
-end
-
---- Try first parser, and if that fails, try the second parser
--- @param p1 the first parser to try
--- @param p2 the second parser to try
--- @return a parser function
-function Parsel.either(p1, p2)
-  return Parsel.any(p1, p2)
 end
 
 --- Parse any alphabetic letter
@@ -182,6 +192,134 @@ function Parsel.digit()
   end
 end
 
+--- Match any single character
+-- @return a parser function that matches any character
+function Parsel.char()
+  return function(parser)
+    if not parser:inBounds() then return noMatch(parser, "out of bounds") end
+    local match = string.sub(parser.input, parser.pos, parser.pos)
+    return {
+      token = Token.new(match, parser.pos, parser.pos),
+      parser = parser:advance(1),
+      result = match
+    }
+  end
+end
+
+--- Match anything but the specified literal single character
+-- @param char character to exclude
+-- @return a parser function that matches any character besides char
+function Parsel.charExcept(char)
+  return function(parser)
+    if not parser:inBounds() then return noMatch(parser, "out of bounds") end
+    local match = string.sub(parser.input, parser.pos, parser.pos)
+    if match ~= char then
+      return {
+        token = Token.new(match, parser.pos, parser.pos),
+        parser = parser:advance(1),
+        result = match
+      }
+    else
+      return noMatch(parser, string.format("%s matched %s at position %d", parser.input, char, parser.pos))
+    end
+  end
+end
+
+--- Match single newline char
+-- @return a parser function that matches a newline character
+function Parsel.newline()
+  return Parsel.literal("\n")
+end
+
+--- Match whitespace
+-- Matches at least one tab, space, or newline and consumes it
+-- @return a parser function
+function Parsel.whitespace()
+  return Parsel.oneOrMore(Parsel.any(Parsel.literal(" "), Parsel.literal("\t"), Parsel.newline()))
+end
+
+--- Match optional whitespace
+-- Optionally matches and consumes spaces, tabs and newlines
+-- @return a parser function
+function Parsel.optionalWhitespace()
+  return Parsel.optional(Parsel.oneOrMore(Parsel.any(Parsel.literal(" "), Parsel.literal("\t"), Parsel.newline())))
+end
+
+--- Match any literal passed in, succeeds with the match
+-- @param ... a sequence of literals to try in order
+-- @return a parser function that matches any of the literals
+function Parsel.anyLiteral(...)
+  local literalParsers = {}
+  for _, l in ipairs(table.pack(...)) do
+    table.insert(literalParsers, Parsel.literal(l))
+  end
+  return Parsel.any(table.unpack(literalParsers))
+end
+
+--- Match the parsers string until the specified literal is found
+-- @param literal the literal to match until
+-- @return a parser function matched until right before the literal is found or end of string
+-- @usage
+--local untilEnd = parsel.untilLiteral('end')
+--parsel.parse("if then end").result
+-- -- "if then "
+function Parsel.untilLiteral(literal)
+  return function(parser)
+    local start = parser.pos
+    local stride = #literal - 1
+    local strEnd = #parser.input - stride
+
+    for i = start, strEnd, 1 do
+      local slice = string.sub(parser.input, i, i + stride)
+      if slice == literal then
+        local capture = string.sub(parser.input, start, i - 1)
+        return {
+          token = Token.new(capture, start, i - 1),
+          result = capture,
+          parser = parser:advance(i - start)
+        }
+      end
+    end
+
+    local inputLen = #parser.input
+    local capture = string.sub(parser.input, start, inputLen)
+    return {
+      token = Token.new(capture, start, inputLen),
+      parser = parser:advance(inputLen - start),
+      result = capture
+    }
+  end
+end
+
+--- Combinators
+-- @section combinators
+
+--- Parse any combinators specified in the list
+-- @param ... a list of required parsers to parse in attempt in order
+-- @return a combined parser function
+function Parsel.any(...)
+  local combinators = table.pack(...)
+  return function(parser)
+    for _, c in ipairs(combinators) do
+      local result = parser:run(c)
+      if result.parser:succeeded() then
+        return result
+      end
+    end
+    return noMatch(parser,
+      string.format([[no parser matched %s at position %d (starting at "%s")]], parser.input, parser.pos,
+        string.sub(parser.input, parser.pos, parser.pos)))
+  end
+end
+
+--- Try first parser, and if that fails, try the second parser
+-- @param p1 the first parser to try
+-- @param p2 the second parser to try
+-- @return a parser function
+function Parsel.either(p1, p2)
+  return Parsel.any(p1, p2)
+end
+
 --- Parse a combinator at least one time and until the parse fails
 -- @param p the parser to attempt one or more times
 -- @return a parser function
@@ -209,38 +347,6 @@ function Parsel.oneOrMore(p)
         string.format("could not match %s at least once at position %d: %s", result.parser.input, result.parser.pos,
           result.parser.error))
     end
-  end
-end
-
---- Map the result of a parser
--- @param base parser to run and map the result of
--- @param mapFn function to apply to the result of the parser operation
--- @return a new parser function with a mapped result
-function Parsel.map(base, mapFn)
-  return function(parser)
-    local after = base(parser)
-    if after.parser:succeeded() then
-      after.result = mapFn(after.result)
-    end
-    return after
-  end
-end
-
---- Parse any combinators specified in the list
--- @param ... a list of required parsers to parse in attempt in order
--- @return a combined parser function
-function Parsel.any(...)
-  local combinators = table.pack(...)
-  return function(parser)
-    for _, c in ipairs(combinators) do
-      local result = parser:run(c)
-      if result.parser:succeeded() then
-        return result
-      end
-    end
-    return noMatch(parser,
-      string.format([[no parser matched %s at position %d (starting at "%s")]], parser.input, parser.pos,
-        string.sub(parser.input, parser.pos, parser.pos)))
   end
 end
 
@@ -328,59 +434,6 @@ function Parsel.optional(p)
   end
 end
 
---- Match any single character
--- @return a parser function that matches any character
-function Parsel.char()
-  return function(parser)
-    if not parser:inBounds() then return noMatch(parser, "out of bounds") end
-    local match = string.sub(parser.input, parser.pos, parser.pos)
-    return {
-      token = Token.new(match, parser.pos, parser.pos),
-      parser = parser:advance(1),
-      result = match
-    }
-  end
-end
-
---- Match anything but the specified literal single character
--- @param char character to exclude
--- @return a parser function that matches any character besides char
-function Parsel.charExcept(char)
-  return function(parser)
-    if not parser:inBounds() then return noMatch(parser, "out of bounds") end
-    local match = string.sub(parser.input, parser.pos, parser.pos)
-    if match ~= char then
-      return {
-        token = Token.new(match, parser.pos, parser.pos),
-        parser = parser:advance(1),
-        result = match
-      }
-    else
-      return noMatch(parser, string.format("%s matched %s at position %d", parser.input, char, parser.pos))
-    end
-  end
-end
-
---- Match single newline char
--- @return a parser function that matches a newline character
-function Parsel.newline()
-  return Parsel.literal("\n")
-end
-
---- Match whitespace
--- Matches at least one tab, space, or newline and consumes it
--- @return a parser function
-function Parsel.whitespace()
-  return Parsel.oneOrMore(Parsel.any(Parsel.literal(" "), Parsel.literal("\t"), Parsel.newline()))
-end
-
---- Match optional whitespace
--- Optionally matches and consumes spaces, tabs and newlines
--- @return a parser function
-function Parsel.optionalWhitespace()
-  return Parsel.optional(Parsel.oneOrMore(Parsel.any(Parsel.literal(" "), Parsel.literal("\t"), Parsel.newline())))
-end
-
 --- Returns a parser that lazily evaluates a function
 -- @param f func (must return a parser)
 -- @return a parser function
@@ -388,17 +441,6 @@ function Parsel.lazy(f)
   return function(parser)
     return parser:run(f())
   end
-end
-
---- Match any literal passed in, succeeds with the match
--- @param ... a sequence of literals to try in order
--- @return a parser function that matches any of the literals
-function Parsel.anyLiteral(...)
-  local literalParsers = {}
-  for _, l in ipairs(table.pack(...)) do
-    table.insert(literalParsers, Parsel.literal(l))
-  end
-  return Parsel.any(table.unpack(literalParsers))
 end
 
 --- Match parsers delimited by successful parse of delim
@@ -464,41 +506,6 @@ function Parsel.exclude(p, exclusionFunc)
     end
 
     return parsed
-  end
-end
-
---- Match the parsers string until the specified literal is found
--- @param literal the literal to match until
--- @return a parser function matched until right before the literal is found or end of string
--- @usage
---local untilEnd = parsel.untilLiteral('end')
---parsel.parse("if then end").result
--- -- "if then "
-function Parsel.untilLiteral(literal)
-  return function(parser)
-    local start = parser.pos
-    local stride = #literal - 1
-    local strEnd = #parser.input - stride
-
-    for i = start, strEnd, 1 do
-      local slice = string.sub(parser.input, i, i + stride)
-      if slice == literal then
-        local capture = string.sub(parser.input, start, i - 1)
-        return {
-          token = Token.new(capture, start, i - 1),
-          result = capture,
-          parser = parser:advance(i - start)
-        }
-      end
-    end
-
-    local inputLen = #parser.input
-    local capture = string.sub(parser.input, start, inputLen)
-    return {
-      token = Token.new(capture, start, inputLen),
-      parser = parser:advance(inputLen - start),
-      result = capture
-    }
   end
 end
 
