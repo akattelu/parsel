@@ -452,7 +452,13 @@ end
 -- @param p parser to wrap
 -- @param exclusionFunc if this function returns true, the parser will fail
 -- @return a parser function that parses p and fails if the exclusionFunc criteria is matched
--- @usage local ignoreOdd = parsel.oneOrMore(parsel.exclude(parsel.digit(), function(d) return tonumber(d)%2 == 0 end))
+-- @usage
+--local ignoreOdd = parsel.exclude(parsel.digit(), function(d)
+--  return tonumber(d)%2 == 1
+--end)
+--local evenString = parsel.oneOrMore(ignoreOdd)
+--table.concat(parsel.parse("2468").result, "")
+-- -- 246
 function Parsel.exclude(p, exclusionFunc)
   return function(parser)
     local parsed = parser:run(p)
