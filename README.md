@@ -1,5 +1,13 @@
 # Parsel
 
+<!--toc:start-->
+- [Parsel](#parsel)
+  - [Usage](#usage)
+  - [Available Parsers](#available-parsers)
+  - [Available combinators](#available-combinators)
+  - [TODO](#todo)
+<!--toc:end-->
+
 A parser combinator library for Lua 
 
 ## Usage
@@ -43,3 +51,18 @@ p.sepBy(c, delim) -- parses many instances of c parser delimited by delim parser
 p.exclude(c, cond) -- Fails a parser if it matches condition set by cond
 p.lazy(func) -- returns a combinator that lazily evaluates func (func should return a parser)
 ```
+
+
+## TODO
+[ ] elseif 
+[ ] else 
+[ ] tables
+[ ] access operations
+[ ] and/or infix
+[ ] comments
+[ ] blockstrings
+[ ] single quote strings
+[ ] method access syntax
+[ ] concat operator
+[ ] local functions
+[ ] table assignment

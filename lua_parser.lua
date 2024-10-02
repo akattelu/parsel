@@ -1,21 +1,17 @@
 local p = require 'parsel'
 
---- Return a function that selects the nth item from a sequence
-local pick = function(n)
-  return function(seq)
-    return seq[n]
-  end
-end
 
 local Parsers = {}
-local keywords = {
-  "if", "else", "then", "end", "elseif", "return", "local", "function", "while", "for", "do", "in",
-  "repeat", "until", "while", "true", "false", "nil"
-}
-local block = p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), p.optionalWhitespace()), pick(1)))
-local argParser = p.map(p.lazy(function() return Parsers.ident end), function(i) return i.value end)
 
+
+-- Helper functions
+
+--- Check if word is a lua keyword
 local function isKeyword(word)
+  local keywords = {
+    "if", "else", "then", "end", "elseif", "return", "local", "function", "while", "for", "do", "in",
+    "repeat", "until", "while", "true", "false", "nil"
+  }
   for _, v in ipairs(keywords) do
     if v == word then
       return true
@@ -25,6 +21,24 @@ local function isKeyword(word)
   return false
 end
 
+-- Return a function that selects the nth item from a sequence
+local pick = function(n)
+  return function(seq)
+    return seq[n]
+  end
+end
+
+
+-- Helper smaller parsers
+local block = p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), p.optionalWhitespace()), pick(1)))
+local argParser = p.map(p.lazy(function() return Parsers.ident end), function(i) return i.value end)
+local nameWithDots = p.map(p.sepBy(Parsers.ident, p.literal(".")), function(seq)
+  local values = {}
+  for _, v in ipairs(seq) do
+    table.insert(values, v.value)
+  end
+  return table.concat(values, ".")
+end)
 
 -- Primitives
 Parsers.ident = p.exclude(p.map(p.seq(p.letter(), p.zeroOrMore(p.either(p.letter(), p.digit()))),
@@ -216,14 +230,6 @@ Parsers.returnStmt = p.map(
   end
 )
 
-local nameWithDots = p.map(p.sepBy(Parsers.ident, p.literal(".")), function(seq)
-  local values = {}
-  for _, v in ipairs(seq) do
-    table.insert(values, v.value)
-  end
-  return table.concat(values, ".")
-end)
-
 
 Parsers.functionStmt = p.map(
   p.seq(
@@ -232,11 +238,12 @@ Parsers.functionStmt = p.map(
     , nameWithDots
     , p.optionalWhitespace()
     , p.any(
-      p.map(p.literal("()"), function(_) return {} end),
-      p.map(p.literal("(...)"), function(_) return { "..." } end),
-      p.map(p.seq(p.literal("("), p.sepBy(argParser, p.seq(p.literal(','), p.optionalWhitespace())), p.literal(")")),
-        pick(2))
-    )
+      p.map(p.literal("()"), function(_) return {} end)                                                               -- no args
+      ,
+      p.map(p.literal("(...)"), function(_) return { "..." } end)                                                     -- variadic
+      ,
+      p.map(p.seq(p.literal("("), p.sepBy(argParser, p.seq(p.literal(','), p.optionalWhitespace())), p.literal(")")), -- multiple args
+        pick(2)))
     , p.optionalWhitespace()
     , block
     , p.optionalWhitespace()
@@ -250,10 +257,16 @@ Parsers.functionStmt = p.map(
     }
   end)
 
-Parsers.statement = p.any(Parsers.assignment, Parsers.declaration, Parsers.ifStmt, Parsers.whileStmt, Parsers.repeatStmt,
-  Parsers.returnStmt,
-  Parsers.functionStmt,
-  Parsers.expressionStatement)
+Parsers.statement = p.any(
+  Parsers.assignment
+  , Parsers.declaration
+  , Parsers.ifStmt
+  , Parsers.whileStmt
+  , Parsers.repeatStmt
+  , Parsers.returnStmt
+  , Parsers.functionStmt
+  , Parsers.expressionStatement
+)
 
 -- Program
 Parsers.program = p.oneOrMore(p.map(p.seq(p.optionalWhitespace(), Parsers.statement, p.optionalWhitespace()), pick(2)))
