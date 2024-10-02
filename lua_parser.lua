@@ -57,16 +57,13 @@ Parsers.float = p.map(p.seq(Parsers.int, p.literal("."), Parsers.int),
   end)
 Parsers.string = p.map(
   p.any(
-    p.map(p.seq(p.literal('"'), p.zeroOrMore(p.charExcept('"')), p.literal('"')),
-      function(seq) return table.concat(seq[2], "") end)
-    ,
-    p.map(p.seq(p.literal([[']]), p.zeroOrMore(p.charExcept("'")), p.literal([[']])),
-      function(seq) return table.concat(seq[2], "") end)
-    , p.map(p.seq(p.literal('[['), p.untilLiteral("]]"), p.literal(']]')), pick(2))
+    p.seq(p.literal('"'), p.untilLiteral('"'), p.literal('"'))
+    , p.seq(p.literal([[']]), p.untilLiteral("'"), p.literal([[']]))
+    , p.seq(p.literal('[['), p.untilLiteral("]]"), p.literal(']]'))
   ), function(val)
     return {
       type = "string",
-      value = val
+      value = val[2]
     }
   end)
 Parsers.number = p.either(Parsers.float, Parsers.int)
