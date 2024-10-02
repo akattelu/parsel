@@ -318,6 +318,7 @@ function TestNamedFunction()
   for _, v in ipairs(tree) do
     assertType(v, 'function')
     lu.assertEquals(v.name, 'name')
+    lu.assertEquals(v.scope, 'GLOBAL')
   end
 
   lu.assertEquals(tree[1].args, { "arg1" })
@@ -350,13 +351,14 @@ function TestFunctionNameWithDots()
 end
 
 function TestLocalFunction()
-  local tree, err = p.parseProgramString([[function name.with.dots(arg1) end]])
+  local tree, err = p.parseProgramString([[local function name(arg1) end]])
   lu.assertNil(err)
   lu.assertEquals(#tree, 1)
   assertType(tree[1], 'function')
-  lu.assertEquals(tree[1].name, 'name.with.dots')
+  lu.assertEquals(tree[1].name, 'name')
   lu.assertEquals(tree[1].args, { "arg1" })
   lu.assertEquals(tree[1].block, {})
+  lu.assertEquals(tree[1].scope, "LOCAL")
 end
 
 os.exit(lu.LuaUnit.run())

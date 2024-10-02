@@ -239,7 +239,8 @@ Parsers.returnStmt = p.map(
 
 Parsers.functionStmt = p.map(
   p.seq(
-    p.literal("function")
+    p.optional(p.seq(p.literal('local'), p.whitespace()))
+    , p.literal("function")
     , p.whitespace()
     , nameWithDots
     , p.optionalWhitespace()
@@ -255,9 +256,10 @@ Parsers.functionStmt = p.map(
   ), function(seq)
     return {
       type = "function",
-      name = seq[3],
-      args = seq[5],
-      block = seq[7]
+      name = seq[4],
+      args = seq[6],
+      block = seq[8],
+      scope = seq[1] == p.nullResult and "GLOBAL" or "LOCAL"
     }
   end)
 

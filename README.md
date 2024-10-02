@@ -66,6 +66,6 @@ p.lazy(func) -- returns a combinator that lazily evaluates func (func should ret
 [x] single quote strings
 [ ] method access syntax
 [x] concat operator
-[ ] local functions
+[x] local functions
 [ ] table assignment
 [ ] comparison operators
