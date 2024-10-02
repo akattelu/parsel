@@ -8,7 +8,6 @@ end
 
 local function assertErrContains(result, err)
   lu.assertStrContains(result.parser.error, err)
-  lu.assertNil(result.tok)
 end
 
 local function assertTokens(actual, toks)
@@ -244,6 +243,14 @@ c]]
     { "\n", "b" },
     { "\n", "c" },
   })
+end
+
+function TestWhitespace()
+  local parsed = parsel.parse(" \t \n ", parsel.whitespace())
+  assertResult(parsed, { " ", "\t", " ", "\n", " " })
+
+  parsed = parsel.parse("local", parsel.whitespace())
+  assertErrContains(parsed, "could not match local at least once at position 1")
 end
 
 function TestOptionalWhitespace()

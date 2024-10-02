@@ -33,6 +33,7 @@ p.letter() -- matches any alphabetic letter
 p.literal(str) -- matches the literal string `str`
 p.untilLiteral(str) -- matches until the literal string `str` or end of string
 p.newline() -- matches a newline character
+p.whitespace() -- matches one or more spaces, tabs, or newlines
 p.optionalWhitespace() -- matches zero or more spaces, tabs, or newlines
 p.char() -- matches any single character
 ```

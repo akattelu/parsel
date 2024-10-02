@@ -383,6 +383,13 @@ function Parsel.newline()
   return Parsel.literal("\n")
 end
 
+--- Match whitespace
+-- Matches at least one tab, space, or newline and consumes it
+-- @return a parser function
+function Parsel.whitespace()
+  return Parsel.oneOrMore(Parsel.any(Parsel.literal(" "), Parsel.literal("\t"), Parsel.newline()))
+end
+
 --- Match optional whitespace
 -- Optionally matches and consumes spaces, tabs and newlines
 -- @return a parser function
