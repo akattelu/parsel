@@ -54,18 +54,18 @@ p.exclude(c, cond) -- Fails a parser if it matches condition set by cond
 p.lazy(func) -- returns a combinator that lazily evaluates func (func should return a parser)
 ```
 
-
 ## TODO
 [ ] elseif 
 [ ] else 
 [ ] tables
 [ ] access operations
-[x] and/or infix
 [ ] comments
-[x] blockstrings
-[x] single quote strings
+[ ] function calls
 [ ] method access syntax
-[x] concat operator
-[x] local functions
 [ ] table assignment
-[ ] comparison operators
+[x] comparison operators
+[x] concat operator
+[x] blockstrings
+[x] and/or infix
+[x] single quote strings
+[x] local functions

@@ -169,9 +169,13 @@ function TestInfix()
     true and true
     false or true
     "hello ".."world"
+    1 < 2
+    2 <= 2
+    2 > 1
+    2 >= 2
   ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 12)
+  lu.assertEquals(#tree, 16)
   for _, v in ipairs(tree) do
     assertType(v, "infix_expression")
   end
@@ -192,6 +196,10 @@ function TestInfix()
   assertInfixBools(tree[10], true, "and", true)
   assertInfixBools(tree[11], false, "or", true)
   assertInfixStrings(tree[12], "hello ", "..", "world")
+  assertInfixNumbers(tree[13], 1, "<", 2)
+  assertInfixNumbers(tree[14], 2, "<=", 2)
+  assertInfixNumbers(tree[15], 2, ">", 1)
+  assertInfixNumbers(tree[16], 2, ">=", 2)
 end
 
 function TestIfThenStmt()
