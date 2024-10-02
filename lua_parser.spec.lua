@@ -90,9 +90,11 @@ function TestPrimitives()
     true
     false
     nil
-    x]])
+    x
+    'hello world'
+    ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 7)
+  lu.assertEquals(#tree, 8)
   assertNumber(tree[1], 5)
   assertNumber(tree[2], 12.34)
   assertString(tree[3], "hello world")
@@ -100,6 +102,14 @@ function TestPrimitives()
   assertBool(tree[5], false)
   assertNilValue(tree[6])
   assertIdentifier(tree[7], "x")
+  assertString(tree[8], "hello world")
+end
+
+function TestMultilineString()
+  local tree, err = p.parseProgramString("[[hello world]]")
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 1)
+  assertString(tree[1], "hello world")
 end
 
 function TestParenthesized()

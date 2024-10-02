@@ -31,6 +31,7 @@ local p = require 'parsel'
 p.digit() -- matches any single digit
 p.letter() -- matches any alphabetic letter
 p.literal(str) -- matches the literal string `str`
+p.untilLiteral(str) -- matches until the literal string `str` or end of string
 p.newline() -- matches a newline character
 p.optionalWhitespace() -- matches zero or more spaces, tabs, or newlines
 p.char() -- matches any single character
@@ -60,8 +61,8 @@ p.lazy(func) -- returns a combinator that lazily evaluates func (func should ret
 [ ] access operations
 [x] and/or infix
 [ ] comments
-[ ] blockstrings
-[ ] single quote strings
+[x] blockstrings
+[x] single quote strings
 [ ] method access syntax
 [x] concat operator
 [ ] local functions

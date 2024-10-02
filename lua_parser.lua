@@ -55,11 +55,18 @@ Parsers.float = p.map(p.seq(Parsers.int, p.literal("."), Parsers.int),
         "." .. tostring(digList[3].value))
     }
   end)
-Parsers.string = p.map(p.seq(p.literal('"'), p.zeroOrMore(p.charExcept('"')), p.literal('"')),
-  function(seq)
+Parsers.string = p.map(
+  p.any(
+    p.map(p.seq(p.literal('"'), p.zeroOrMore(p.charExcept('"')), p.literal('"')),
+      function(seq) return table.concat(seq[2], "") end)
+    ,
+    p.map(p.seq(p.literal([[']]), p.zeroOrMore(p.charExcept("'")), p.literal([[']])),
+      function(seq) return table.concat(seq[2], "") end)
+    , p.map(p.seq(p.literal('[['), p.untilLiteral("]]"), p.literal(']]')), pick(2))
+  ), function(val)
     return {
       type = "string",
-      value = table.concat(seq[2], "")
+      value = val
     }
   end)
 Parsers.number = p.either(Parsers.float, Parsers.int)
