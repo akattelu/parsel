@@ -43,6 +43,12 @@ local function assertInfixBools(tree, lhs, op, rhs)
   assertBool(tree.rhs, rhs)
 end
 
+local function assertInfixStrings(tree, lhs, op, rhs)
+  lu.assertEquals(tree.op, op)
+  assertString(tree.lhs, lhs)
+  assertString(tree.rhs, rhs)
+end
+
 local function assertAssignmentNumber(tree, ident, numVal, scope)
   lu.assertEquals(tree.type, "assignment")
   assertIdentifier(tree.ident, ident)
@@ -152,9 +158,10 @@ function TestInfix()
     1 + (2 + 3) + 4
     true and true
     false or true
+    "hello ".."world"
   ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 11)
+  lu.assertEquals(#tree, 12)
   for _, v in ipairs(tree) do
     assertType(v, "infix_expression")
   end
@@ -174,6 +181,7 @@ function TestInfix()
   assertNumber(tree[9].rhs.rhs, 4)
   assertInfixBools(tree[10], true, "and", true)
   assertInfixBools(tree[11], false, "or", true)
+  assertInfixStrings(tree[12], "hello ", "..", "world")
 end
 
 function TestIfThenStmt()
