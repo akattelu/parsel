@@ -7,10 +7,13 @@ local pick = function(n)
   end
 end
 
+local Parsers = {}
 local keywords = {
   "if", "else", "then", "end", "elseif", "return", "local", "function", "while", "for", "do", "in",
   "repeat", "until", "while", "true", "false", "nil"
 }
+local block = p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), p.optionalWhitespace()), pick(1)))
+local argParser = p.map(p.lazy(function() return Parsers.ident end), function(i) return i.value end)
 
 local function isKeyword(word)
   for _, v in ipairs(keywords) do
@@ -22,7 +25,6 @@ local function isKeyword(word)
   return false
 end
 
-local Parsers = {}
 
 -- Primitives
 Parsers.ident = p.exclude(p.map(p.seq(p.letter(), p.zeroOrMore(p.either(p.letter(), p.digit()))),
@@ -62,7 +64,7 @@ Parsers.parenthesizedExpression = p.map(
   ), pick(2))
 Parsers.baseExpression = p.either(Parsers.primitiveExpression, Parsers.parenthesizedExpression)
 Parsers.expression = p.any(
--- p.lazy(function() return Parsers.functionExpression end),
+  p.lazy(function() return Parsers.functionExpression end),
   p.lazy(function() return Parsers.infixExpression end),
   p.lazy(function() return Parsers.notExpression end),
   p.lazy(function() return Parsers.prefixExpression end),
@@ -94,10 +96,30 @@ Parsers.infixExpression = p.map(
     return { type = "infix_expression", lhs = seq[1], op = seq[3], rhs = seq[5] }
   end)
 
-Parsers.functionExpression = p.literal("function")
+Parsers.functionExpression = p.map(
+  p.seq(
+    p.literal("function")
+    , p.optionalWhitespace()
+    , p.any(
+      p.map(p.literal("()"), function(_) return {} end),
+      p.map(p.literal("(...)"), function(_) return { "..." } end),
+      p.map(p.seq(p.literal("("), p.sepBy(argParser, p.seq(p.literal(','), p.optionalWhitespace())), p.literal(")")),
+        pick(2))
+    )
+    , p.optionalWhitespace()
+    , block
+    , p.optionalWhitespace()
+    , p.literal('end')
+  ), function(seq)
+    return {
+      type = "function",
+      name = nil,
+      args = seq[3],
+      block = seq[5]
+    }
+  end)
 
 -- Statements
-local block = p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), p.optionalWhitespace()), pick(1)))
 
 Parsers.expressionStatement = Parsers.expression
 Parsers.ifStmt = p.map(
@@ -202,7 +224,6 @@ local nameWithDots = p.map(p.sepBy(Parsers.ident, p.literal(".")), function(seq)
   return table.concat(values, ".")
 end)
 
-local argParser = p.map(Parsers.ident, function(i) return i.value end)
 
 Parsers.functionStmt = p.map(
   p.seq(
@@ -243,6 +264,9 @@ Parsers.parseString = function(s, parser)
   if not parsed.parser:succeeded() then
     return nil, parsed.parser.error
   end
+  -- if parsed.parser.pos ~= #s then
+  --   return nil, "did not complete entire string"
+  -- end
   return parsed.result, nil
 end
 

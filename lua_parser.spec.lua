@@ -254,6 +254,27 @@ function TestReturn()
   assertInfixNumbers(tree.value, 1, "+", 2)
 end
 
+function TestAnonFunctions()
+  local tree, err = p.parseProgramString([[
+      local w = function() end
+      local x = function(arg1) end
+      local y = function(arg1, arg2, arg3) end
+      local z = function(...) end
+  ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 4)
+  for _, v in ipairs(tree) do
+    assertType(v.value, 'function')
+    lu.assertEquals(v.value.block, {})
+    lu.assertNil(v.value.name)
+  end
+
+  lu.assertEquals(tree[1].value.args, {})
+  lu.assertEquals(tree[2].value.args, { "arg1" })
+  lu.assertEquals(tree[3].value.args, { "arg1", "arg2", "arg3" })
+  lu.assertEquals(tree[4].value.args, { "..." })
+end
+
 function TestNamedFunction()
   local tree, err = p.parseProgramString([[
       function name(arg1) end
@@ -297,9 +318,7 @@ function TestNamedFunction()
 end
 
 function TestFunctionNameWithDots()
-  local tree, err = p.parseProgramString([[
-      function name.with.dots(arg1) end
-     ]])
+  local tree, err = p.parseProgramString([[function name.with.dots(arg1) end]])
   lu.assertNil(err)
   lu.assertEquals(#tree, 1)
   assertType(tree[1], 'function')
