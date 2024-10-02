@@ -30,7 +30,9 @@ end
 
 
 -- Helper smaller parsers
-local block = p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), p.optionalWhitespace()), pick(1)))
+local ws = p.whitespace()
+local ows = p.optionalWhitespace()
+local block = p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), ows), pick(1)))
 local argParser = p.map(p.lazy(function() return Parsers.ident end), function(i) return i.value end)
 local nameWithDots = p.map(p.sepBy(p.lazy(function() return Parsers.ident end), p.literal(".")), function(seq)
   local values = {}
@@ -39,6 +41,7 @@ local nameWithDots = p.map(p.sepBy(p.lazy(function() return Parsers.ident end), 
   end
   return table.concat(values, ".")
 end)
+
 
 -- Primitives
 Parsers.ident = p.exclude(p.map(p.seq(p.letter(), p.zeroOrMore(p.either(p.letter(), p.digit()))),
@@ -106,9 +109,9 @@ Parsers.notExpression = p.map(
 )
 Parsers.infixExpression = p.map(
   p.seq(Parsers.baseExpression,
-    p.optionalWhitespace(),
+    ows,
     p.anyLiteral("+", "-", "/", "*", "==", "~=", "^", "or", "and", "..", ">=", "<=", ">", "<"),
-    p.optionalWhitespace(),
+    ows,
     Parsers.expression
   ), function(seq)
     return { type = "infix_expression", lhs = seq[1], op = seq[3], rhs = seq[5] }
@@ -117,16 +120,16 @@ Parsers.infixExpression = p.map(
 Parsers.functionExpression = p.map(
   p.seq(
     p.literal("function")
-    , p.optionalWhitespace()
+    , ows
     , p.any(
       p.map(p.literal("()"), function(_) return {} end),
       p.map(p.literal("(...)"), function(_) return { "..." } end),
-      p.map(p.seq(p.literal("("), p.sepBy(argParser, p.seq(p.literal(','), p.optionalWhitespace())), p.literal(")")),
+      p.map(p.seq(p.literal("("), p.sepBy(argParser, p.seq(p.literal(','), ows)), p.literal(")")),
         pick(2))
     )
-    , p.optionalWhitespace()
+    , ows
     , block
-    , p.optionalWhitespace()
+    , ows
     , p.literal('end')
   ), function(seq)
     return {
@@ -143,13 +146,13 @@ Parsers.expressionStatement = Parsers.expression
 Parsers.ifStmt = p.map(
   p.seq(
     p.literal("if"),
-    p.whitespace(),
+    ws,
     Parsers.expression,
-    p.whitespace(),
+    ws,
     p.literal("then"),
-    p.whitespace(),
+    ws,
     block,
-    p.optionalWhitespace(),
+    ows,
     p.literal("end")
   ), function(seq)
     return {
@@ -162,13 +165,13 @@ Parsers.ifStmt = p.map(
 Parsers.whileStmt = p.map(
   p.seq(
     p.literal("while"),
-    p.whitespace(),
+    ws,
     Parsers.expression,
-    p.whitespace(),
+    ws,
     p.literal("do"),
-    p.whitespace(),
+    ws,
     block,
-    p.optionalWhitespace(),
+    ows,
     p.literal("end")
   ), function(seq)
     return {
@@ -181,11 +184,11 @@ Parsers.whileStmt = p.map(
 Parsers.repeatStmt = p.map(
   p.seq(
     p.literal("repeat"),
-    p.whitespace(),
+    ws,
     block,
-    p.optionalWhitespace(),
+    ows,
     p.literal("until"),
-    p.whitespace(),
+    ws,
     Parsers.expression
   ), function(seq)
     return {
@@ -195,7 +198,7 @@ Parsers.repeatStmt = p.map(
     }
   end)
 Parsers.declaration = p.map(
-  p.seq(p.literal("local"), p.whitespace(), Parsers.ident),
+  p.seq(p.literal("local"), ws, Parsers.ident),
   function(seq)
     return {
       type = "declaration",
@@ -207,11 +210,11 @@ Parsers.declaration = p.map(
 Parsers.assignment =
     p.map(
       p.seq(
-        p.optional(p.seq(p.literal("local"), p.whitespace()))
+        p.optional(p.seq(p.literal("local"), ws))
         , Parsers.ident
-        , p.optionalWhitespace()
+        , ows
         , p.literal("=")
-        , p.optionalWhitespace()
+        , ows
         , Parsers.expression
       ), function(results)
         return {
@@ -224,7 +227,7 @@ Parsers.assignment =
 
 Parsers.returnStmt = p.map(
   p.seq(
-    p.literal('return'), p.whitespace(), Parsers.expression
+    p.literal('return'), ws, Parsers.expression
   ), function(seq)
     return {
       type = "return",
@@ -236,19 +239,19 @@ Parsers.returnStmt = p.map(
 
 Parsers.functionStmt = p.map(
   p.seq(
-    p.optional(p.seq(p.literal('local'), p.whitespace()))
+    p.optional(p.seq(p.literal('local'), ws))
     , p.literal("function")
-    , p.whitespace()
+    , ws
     , nameWithDots
-    , p.optionalWhitespace()
+    , ows
     , p.any(
       p.map(p.literal("()"), function(_) return {} end),
       p.map(p.literal("(...)"), function(_) return { "..." } end),
-      p.map(p.seq(p.literal("("), p.sepBy(argParser, p.seq(p.literal(','), p.optionalWhitespace())), p.literal(")")),
+      p.map(p.seq(p.literal("("), p.sepBy(argParser, p.seq(p.literal(','), ows)), p.literal(")")),
         pick(2)))
-    , p.optionalWhitespace()
+    , ows
     , block
-    , p.optionalWhitespace()
+    , ows
     , p.literal('end')
   ), function(seq)
     return {
@@ -272,7 +275,7 @@ Parsers.statement = p.any(
 )
 
 -- Program
-Parsers.program = p.oneOrMore(p.map(p.seq(p.optionalWhitespace(), Parsers.statement, p.optionalWhitespace()), pick(2)))
+Parsers.program = p.oneOrMore(p.map(p.seq(ows, Parsers.statement, ows), pick(2)))
 
 -- Parse string
 Parsers.parseString = function(s, parser)
