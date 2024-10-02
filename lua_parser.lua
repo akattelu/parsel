@@ -111,8 +111,7 @@ Parsers.prefixExpression = p.map(
     ows,
     Parsers.expression
   ), function(seq)
-    return false
-    -- return seq[3].type == "prefix_expression" and seq[3].op == "-"
+    return seq[3].type == "prefix_expression" and seq[3].op == "-"
   end), function(seq)
     return { type = "prefix_expression", op = seq[1], rhs = seq[3] }
   end)
