@@ -26,7 +26,7 @@ Parsers.float = p.map(p.seq(Parsers.int, p.literal("."), Parsers.int),
         "." .. tostring(digList[3].value))
     }
   end)
-Parsers.string = p.map(p.seq(p.literal('"'), p.zeroOrMore(p.literalBesides('"')), p.literal('"')),
+Parsers.string = p.map(p.seq(p.literal('"'), p.zeroOrMore(p.charExcept('"')), p.literal('"')),
   function(seq)
     return {
       type = "string",

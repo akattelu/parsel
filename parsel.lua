@@ -361,7 +361,7 @@ end
 --- Match anything but the specified literal single character
 -- @param char character to exclude
 -- @return a parser function that matches any character besides char
-function Parsel.literalBesides(char)
+function Parsel.charExcept(char)
   return function(parser)
     if not parser:inBounds() then return noMatch(parser, "out of bounds") end
     local match = string.sub(parser.input, parser.pos, parser.pos)
@@ -445,6 +445,28 @@ function Parsel.sepBy(p, delim)
       result = results,
       parser = current.parser,
     }
+  end
+end
+
+--- Fails a parser if it matches condition set by exclusionFunc
+-- @param p parser to wrap
+-- @param exclusionFunc if this function returns true, the parser will fail
+-- @return a parser function that parses p and fails if the exclusionFunc criteria is matched
+-- @usage local ignoreOdd = parsel.oneOrMore(parsel.exclude(parsel.digit(), function(d) return tonumber(d)%2 == 0 end))
+function Parsel.exclude(p, exclusionFunc)
+  return function(parser)
+    local parsed = parser:run(p)
+    if not parsed.parser:succeeded() then
+      return noMatch(parsed.parser, parsed.parser.error)
+    end
+    local ignore = exclusionFunc(parsed.result)
+    if ignore then
+      return noMatch(parser,
+        string.format([[ignore condition was true after parsing "%s" at position %d]], parsed.parser.input,
+          parsed.parser.pos))
+    end
+
+    return parsed
   end
 end
 

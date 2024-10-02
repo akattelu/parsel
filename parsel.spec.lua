@@ -254,7 +254,7 @@ function TestOptionalWhitespace()
 end
 
 function TestLiteralBesides()
-  local notB = parsel.literalBesides("b")
+  local notB = parsel.charExcept("b")
   local parsed = parsel.parse(".", notB)
   assertResult(parsed, ".")
   parsed = parsel.parse("b", notB)
@@ -278,6 +278,17 @@ function TestSepBy()
 
   parsed = parsel.parse("a", commaSep)
   assertResult(parsed, { "a" })
+end
+
+function TestExclude()
+  local ignoreOdd = parsel.exclude(parsel.digit(), function(d) return tonumber(d) % 2 == 1 end)
+  local parsed    = parsel.parse("2", ignoreOdd)
+  assertResult(parsed, "2")
+  lu.assertEquals(parsed.parser.pos, 2)
+
+  parsed = parsel.parse("1", ignoreOdd)
+  assertErrContains(parsed, [[ignore condition was true after parsing "1" at position 2]])
+  lu.assertEquals(parsed.parser.pos, 1)
 end
 
 os.exit(lu.LuaUnit.run())
