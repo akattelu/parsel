@@ -57,6 +57,12 @@ local function assertAssignmentNumber(tree, ident, numVal, scope)
   lu.assertEquals(tree.scope, scope or "LOCAL")
 end
 
+local function assertTableAccess(tree, baseTableName, fieldName)
+  assertType(tree, 'table_access_expression')
+  assertIdentifier(tree.base, baseTableName)
+  assertString(tree.field, fieldName)
+end
+
 function TestIdent()
   local _, err = p.parseString("if", p.ident)
   lu.assertStrContains(err, "ignore condition was true after parsing")
@@ -381,11 +387,47 @@ function TestLineComments()
 
     return 1 + 2 -- test
 ]])
-  p.dlog(tree)
   lu.assertNil(err)
   assertAssignmentNumber(tree[1], "x", 4)
   assertAssignmentNumber(tree[2], "y", 4)
   assertInfixNumbers(tree[3].value, 1, "+", 2)
+end
+
+function TestTableAccess()
+  local tree, err = p.parseProgramString([[
+  t.a
+  t.b
+  t.a.b
+  (1+2).b
+]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 4)
+
+  assertTableAccess(tree[1], "t", "a")
+  assertTableAccess(tree[2], "t", "b")
+  assertTableAccess(tree[3].base, "t", "a")
+  assertIdentifier(tree[3].base.base, "t")
+  assertString(tree[3].base.field, "t")
+  assertInfixNumbers(tree[4].base, 1, "+", 2)
+  assertString(tree[4].field, "b")
+  -- {
+  --   type = "table_access_expression",
+  --   base = {
+  --     type = "table_access_expression",
+  --     base = {
+  --       type = "identifier",
+  --       value = "t"
+  --     },
+  --     field = {
+  --       type = "string",
+  --       value = "a"
+  --     }
+  --   },
+  --   field = {
+  --     type = "string",
+  --     value = "b"
+  --   }
+  -- }
 end
 
 os.exit(lu.LuaUnit.run())
