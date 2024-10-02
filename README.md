@@ -27,31 +27,32 @@ print(parsed.result)
 ## Available Parsers
 
 ```lua
-local p = require 'parsel'
-p.digit() -- matches any single digit
-p.letter() -- matches any alphabetic letter
-p.literal(str) -- matches the literal string `str`
-p.untilLiteral(str) -- matches until the literal string `str` or end of string
-p.newline() -- matches a newline character
-p.whitespace() -- matches one or more spaces, tabs, or newlines
-p.optionalWhitespace() -- matches zero or more spaces, tabs, or newlines
-p.char() -- matches any single character
+local Parsel = require 'parsel'
+Parsel.literal (lit) -- Parse any string literal
+Parsel.letter () -- Parse any alphabetic letter
+Parsel.digit () -- Parse any digit
+Parsel.char () -- Match any single character
+Parsel.charExcept (char) -- Match anything but the specified literal single character
+Parsel.newline () -- Match single newline char
+Parsel.whitespace () -- Match whitespace Matches at least one tab, space, or newline and consumes it
+Parsel.optionalWhitespace () -- Match optional whitespace Optionally matches and consumes spaces, tabs and newlines
+Parsel.anyLiteral (...) -- Match any literal passed in, succeeds with the match
+Parsel.untilLiteral (literal) -- Match the parsers string until the specified literal is found
 ```
 
 ## Available combinators
 
 ```lua
-local p = require 'parsel'
-p.any(...) -- succeeds with the first successful parser
-p.anyLiteral(...) -- succeeds if any of the specified literals match
-p.either(c1, c2) -- succeds with first of c1 or c2, fails otherwise
-p.seq(...) -- requires all parsers to succeed in order
-p.optional(c) -- attempts to parse with c, succeeds with p.nullResult otherwise
-p.zeroOrMore(c) -- attempts to parse 0 or more instances of c
-p.oneOrMore(c) -- attempts to parse at least 1 instead of c
-p.sepBy(c, delim) -- parses many instances of c parser delimited by delim parser
-p.exclude(c, cond) -- Fails a parser if it matches condition set by cond
-p.lazy(func) -- returns a combinator that lazily evaluates func (func should return a parser)
+local Parsel = require 'parsel'
+Parsel.any (...) -- Parse any combinators specified in the list
+Parsel.either (p1, p2) -- Try first parser, and if that fails, try the second parser
+Parsel.oneOrMore (p) -- Parse a combinator at least one time and until the parse fails
+Parsel.seq (...) -- Parse all combinators in sequence
+Parsel.zeroOrMore (p) -- Parse zero or more instances of combinators
+Parsel.optional (p) -- Optionally parse a combinator, return Parsel.nullResult if not matched
+Parsel.lazy (f) -- Returns a parser that lazily evaluates a function
+Parsel.sepBy (p, delim) -- Match parsers delimited by successful parse of delim
+Parsel.exclude (p, exclusionFunc) -- Fails a parser if it matches condition set by exclusionFunc
 ```
 
 ## TODO
@@ -62,6 +63,7 @@ p.lazy(func) -- returns a combinator that lazily evaluates func (func should ret
 [ ] function calls
 [ ] method access syntax
 [ ] table assignment
+[ ] bit and misc operators
 [x] comments
 [x] comparison operators
 [x] concat operator
