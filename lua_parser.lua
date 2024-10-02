@@ -54,31 +54,20 @@ Parsers.expression = p.any(
   p.lazy(function() return Parsers.prefixExpression end),
   Parsers.baseExpression
 )
-
 Parsers.prefixExpression = p.map(
   p.seq(
     p.anyLiteral("-"),
     Parsers.expression
-  ),
-  function(seq)
-    return {
-      type = "prefix_expression",
-      op = seq[1],
-      rhs = seq[2]
-    }
-  end
-)
+  ), function(seq)
+    return { type = "prefix_expression", op = seq[1], rhs = seq[2] }
+  end)
 Parsers.notExpression = p.map(
   p.seq(
     p.literal("not"),
     p.literal(" "),
     Parsers.expression
   ), function(seq)
-    return {
-      type = "prefix_expression",
-      op = "not",
-      rhs = seq[3]
-    }
+    return { type = "prefix_expression", op = "not", rhs = seq[3] }
   end
 )
 Parsers.infixExpression = p.map(
@@ -88,19 +77,34 @@ Parsers.infixExpression = p.map(
     p.optionalWhitespace(),
     Parsers.expression
   ), function(seq)
-    return {
-      type = "infix_expression",
-      lhs = seq[1],
-      op = seq[3],
-      rhs = seq[5],
-    }
-  end
-)
+    return { type = "infix_expression", lhs = seq[1], op = seq[3], rhs = seq[5] }
+  end)
+
 -- Statements
 Parsers.expressionStatement = p.map(Parsers.expression, function(e)
   -- Parsers.dlog(e)
   return e
 end)
+Parsers.ifStmt = p.map(
+  p.seq(
+    p.literal("if"),
+    p.optionalWhitespace(),
+    Parsers.expression,
+    p.optionalWhitespace(),
+    p.literal("then"),
+    p.optionalWhitespace(),
+    p.lazy(function() return Parsers.program end),
+    -- p.optionalWhitespace(),
+    p.literal("end")
+  ), function(seq)
+    return {
+      type = "conditional",
+      cond = seq[3],
+      then_block = seq[7],
+      else_block = nil
+    }
+  end
+)
 Parsers.declaration = p.map(
   p.seq(Parsers.localDecl, p.optionalWhitespace(), Parsers.ident),
   function(seq)
@@ -122,21 +126,15 @@ Parsers.assignment =
         , p.optionalWhitespace()
         , Parsers.expression
       ), function(results)
-        local scope
-        if results[1] == p.nullResult then
-          scope = "GLOBAL"
-        else
-          scope = "LOCAL"
-        end
         return {
           type = "assignment",
           ident = results[3],
           value = results[7],
-          scope = scope,
+          scope = results[1] == p.nullResult and "GLOBAL" or "LOCAL",
         }
       end)
 
-Parsers.statement = p.any(Parsers.assignment, Parsers.declaration, Parsers.expressionStatement)
+Parsers.statement = p.any(Parsers.assignment, Parsers.declaration, Parsers.ifStmt, Parsers.expressionStatement)
 
 -- Program
 -- TODO: fix so that you can have new lines at the end of the program

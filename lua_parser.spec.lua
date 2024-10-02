@@ -42,6 +42,14 @@ local function assertInfixBools(tree, lhs, op, rhs)
   assertBool(tree.lhs, lhs)
   assertBool(tree.rhs, rhs)
 end
+
+local function assertAssignmentNumber(tree, ident, numVal, scope)
+  lu.assertEquals(tree.type, "assignment")
+  assertIdentifier(tree.ident, ident)
+  assertNumber(tree.value, numVal)
+  lu.assertEquals(tree.scope, scope or "LOCAL")
+end
+
 function TestDeclaration()
   local tree, err = p.parseProgramString("local x")
   lu.assertNil(err)
@@ -62,20 +70,9 @@ function TestAssignment()
   lu.assertNil(err)
   lu.assertEquals(#tree, 3)
 
-  assertType(tree[1], "assignment")
-  lu.assertEquals(tree[1].scope, "LOCAL")
-  assertIdentifier(tree[1].ident, "x")
-  assertNumber(tree[1].value, 2)
-
-  assertType(tree[2], "assignment")
-  lu.assertEquals(tree[2].scope, "GLOBAL")
-  assertIdentifier(tree[2].ident, "y")
-  assertNumber(tree[2].value, 5)
-  assertType(tree[2], "assignment")
-
-  lu.assertEquals(tree[3].scope, "LOCAL")
-  assertIdentifier(tree[3].ident, "z")
-  assertNumber(tree[3].value, 10)
+  assertAssignmentNumber(tree[1], "x", 2)
+  assertAssignmentNumber(tree[2], "y", 5, "GLOBAL")
+  assertAssignmentNumber(tree[3], "z", 10)
 end
 
 function TestPrimitives()
@@ -171,6 +168,25 @@ function TestInfix()
   lu.assertEquals(tree[9].rhs.op, "+")
   assertInfixNumbers(tree[9].rhs.lhs, 2, "+", 3)
   assertNumber(tree[9].rhs.rhs, 4)
+end
+
+function TestIfThenStmt()
+  local tree, err = p.parseProgramString([[
+      if true == true then local x = 1 end
+
+      if true == true then
+        local x = 1
+      end]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 2)
+  lu.assertEquals(tree[1].type, "conditional")
+  assertInfixBools(tree[1].cond, true, "==", true)
+  assertAssignmentNumber(tree[1].then_block[1], "x", 1)
+
+  p.dlog(tree[2])
+  lu.assertEquals(tree[2].type, "conditional")
+  assertInfixBools(tree[2].cond, true, "==", true)
+  assertAssignmentNumber(tree[2].then_block[1], "x", 1)
 end
 
 os.exit(lu.LuaUnit.run())
