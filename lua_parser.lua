@@ -8,9 +8,8 @@ local pick = function(n)
 end
 
 local keywords = {
-  "if", "else", "then", "end", "elseif", "return", "local", "function", "while", "for", "do", "in", "repeat", "until",
-  "while",
-  "true", "false", "nil"
+  "if", "else", "then", "end", "elseif", "return", "local", "function", "while", "for", "do", "in",
+  "repeat", "until", "while", "true", "false", "nil"
 }
 
 local function isKeyword(word)
@@ -24,10 +23,6 @@ local function isKeyword(word)
 end
 
 local Parsers = {}
-
--- Keywords
-Parsers.localDecl = p.map(p.literal("local"), function(_) return { type = "keyword", value = "local" } end)
-Parsers.equals = p.map(p.literal("="), function(_) return { type = "equals", value = "=" } end)
 
 -- Primitives
 Parsers.ident = p.exclude(p.map(p.seq(p.letter(), p.zeroOrMore(p.either(p.letter(), p.digit()))),
@@ -126,7 +121,7 @@ Parsers.ifStmt = p.map(
   end
 )
 Parsers.declaration = p.map(
-  p.seq(Parsers.localDecl, p.optionalWhitespace(), Parsers.ident),
+  p.seq(p.literal("local"), p.optionalWhitespace(), Parsers.ident),
   function(seq)
     return {
       type = "declaration",
@@ -138,11 +133,11 @@ Parsers.declaration = p.map(
 Parsers.assignment =
     p.map(
       p.seq(
-        p.optional(Parsers.localDecl)
+        p.optional(p.literal("local"))
         , p.optionalWhitespace()
         , Parsers.ident
         , p.optionalWhitespace()
-        , Parsers.equals
+        , p.literal("=")
         , p.optionalWhitespace()
         , Parsers.expression
       ), function(results)
