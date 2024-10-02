@@ -248,41 +248,64 @@ function TestRepeatStmt()
 end
 
 function TestReturn()
-  local tree, err = p.parseString([[return 1 + 2]], Parser.returnStmt)
+  local tree, err = p.parseString([[return 1 + 2]], p.returnStmt)
   lu.assertNil(err)
   assertType(tree, "return")
   assertInfixNumbers(tree.value, 1, "+", 2)
 end
 
-function TestFunction()
+function TestNamedFunction()
   local tree, err = p.parseProgramString([[
-      function() local x = 1 + 2 end
+      function name(arg1) end
 
       function name()
         local x = 1
         local y = 1
-        return x + y
+        return 1 + 2
       end
 
       function name() end
+
+      function name(arg1, arg2, arg3) end
+
+      function name(...) end
      ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 3)
+  lu.assertEquals(#tree, 5)
+  for _, v in ipairs(tree) do
+    assertType(v, 'function')
+    lu.assertEquals(v.name, 'name')
+  end
 
-  assertType(tree[1], "function")
-  lu.assertNil(tree[1].name)
-  assertInfixNumbers(tree[1].block[1], 1, "+", 2)
+  lu.assertEquals(tree[1].args, { "arg1" })
+  lu.assertEquals(tree[1].block, {})
 
-  assertType(tree[2], "function")
-  lu.assertEquals(tree[2].name, "name")
+  lu.assertEquals(tree[2].args, {})
   assertAssignmentNumber(tree[2].block[1], "x", 1)
   assertAssignmentNumber(tree[2].block[2], "y", 1)
-  assertType(tree[2].block[2], "return")
-  assertInfixNumbers(tree[2].block[2].value, "x", "y")
+  assertType(tree[2].block[3], "return")
+  assertInfixNumbers(tree[2].block[3].value, 1, "+", 2)
 
-  assertType(tree[3], "function")
-  lu.assertEquals(tree[3].name, "name")
   lu.assertEquals(tree[3].block, {})
+  lu.assertEquals(tree[3].args, {})
+
+  lu.assertEquals(tree[4].block, {})
+  lu.assertEquals(tree[4].args, { "arg1", "arg2", "arg3" })
+
+  lu.assertEquals(tree[5].block, {})
+  lu.assertEquals(tree[5].args, { "..." })
+end
+
+function TestFunctionNameWithDots()
+  local tree, err = p.parseProgramString([[
+      function name.with.dots(arg1) end
+     ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 1)
+  assertType(tree[1], 'function')
+  lu.assertEquals(tree[1].name, 'name.with.dots')
+  lu.assertEquals(tree[1].args, { "arg1" })
+  lu.assertEquals(tree[1].block, {})
 end
 
 os.exit(lu.LuaUnit.run())
