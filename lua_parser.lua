@@ -146,11 +146,11 @@ Parsers.expressionStatement = Parsers.expression
 Parsers.ifStmt = p.map(
   p.seq(
     p.literal("if"),
-    p.optionalWhitespace(),
+    p.whitespace(),
     Parsers.expression,
-    p.optionalWhitespace(),
+    p.whitespace(),
     p.literal("then"),
-    p.optionalWhitespace(),
+    p.whitespace(),
     block,
     p.optionalWhitespace(),
     p.literal("end")
@@ -165,11 +165,11 @@ Parsers.ifStmt = p.map(
 Parsers.whileStmt = p.map(
   p.seq(
     p.literal("while"),
-    p.optionalWhitespace(),
+    p.whitespace(),
     Parsers.expression,
-    p.optionalWhitespace(),
+    p.whitespace(),
     p.literal("do"),
-    p.optionalWhitespace(),
+    p.whitespace(),
     block,
     p.optionalWhitespace(),
     p.literal("end")
@@ -184,11 +184,11 @@ Parsers.whileStmt = p.map(
 Parsers.repeatStmt = p.map(
   p.seq(
     p.literal("repeat"),
-    p.optionalWhitespace(),
+    p.whitespace(),
     block,
     p.optionalWhitespace(),
     p.literal("until"),
-    p.optionalWhitespace(),
+    p.whitespace(),
     Parsers.expression
   ), function(seq)
     return {
@@ -198,7 +198,7 @@ Parsers.repeatStmt = p.map(
     }
   end)
 Parsers.declaration = p.map(
-  p.seq(p.literal("local"), p.optionalWhitespace(), Parsers.ident),
+  p.seq(p.literal("local"), p.whitespace(), Parsers.ident),
   function(seq)
     return {
       type = "declaration",
@@ -210,8 +210,7 @@ Parsers.declaration = p.map(
 Parsers.assignment =
     p.map(
       p.seq(
-        p.optional(p.literal("local"))
-        , p.optionalWhitespace()
+        p.optional(p.seq(p.literal("local"), p.whitespace()))
         , Parsers.ident
         , p.optionalWhitespace()
         , p.literal("=")
@@ -220,15 +219,15 @@ Parsers.assignment =
       ), function(results)
         return {
           type = "assignment",
-          ident = results[3],
-          value = results[7],
+          ident = results[2],
+          value = results[6],
           scope = results[1] == p.nullResult and "GLOBAL" or "LOCAL",
         }
       end)
 
 Parsers.returnStmt = p.map(
   p.seq(
-    p.literal('return'), p.optionalWhitespace(), Parsers.expression
+    p.literal('return'), p.whitespace(), Parsers.expression
   ), function(seq)
     return {
       type = "return",
@@ -241,7 +240,7 @@ Parsers.returnStmt = p.map(
 Parsers.functionStmt = p.map(
   p.seq(
     p.literal("function")
-    , p.optionalWhitespace()
+    , p.whitespace()
     , nameWithDots
     , p.optionalWhitespace()
     , p.any(

@@ -349,4 +349,14 @@ function TestFunctionNameWithDots()
   lu.assertEquals(tree[1].block, {})
 end
 
+function TestLocalFunction()
+  local tree, err = p.parseProgramString([[function name.with.dots(arg1) end]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 1)
+  assertType(tree[1], 'function')
+  lu.assertEquals(tree[1].name, 'name.with.dots')
+  lu.assertEquals(tree[1].args, { "arg1" })
+  lu.assertEquals(tree[1].block, {})
+end
+
 os.exit(lu.LuaUnit.run())
