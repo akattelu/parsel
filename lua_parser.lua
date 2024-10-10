@@ -103,6 +103,7 @@ Parsers.expression = p.any(
   p.lazy(function() return Parsers.infixExpression end),
   p.lazy(function() return Parsers.notExpression end),
   p.lazy(function() return Parsers.prefixExpression end),
+  p.lazy(function() return Parsers.accessExpression end),
   Parsers.baseExpression
 )
 Parsers.prefixExpression = p.map(
@@ -135,6 +136,20 @@ Parsers.infixExpression = p.map(
   end), function(seq)
     return { type = "infix_expression", lhs = seq[1], op = seq[3], rhs = seq[5] }
   end)
+
+Parsers.accessExpression = p.map(
+  p.seq(
+    Parsers.baseExpression,
+    p.oneOrMore(p.map(p.seq(p.literal("."), Parsers.ident), pick(2)))
+  ),
+  function(seq)
+    return {
+      type = "access_expression",
+      lhs = seq[1],
+      index = seq[2]
+    }
+  end
+)
 
 Parsers.functionExpression = p.map(
   p.seq(

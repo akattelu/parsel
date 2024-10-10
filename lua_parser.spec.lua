@@ -50,6 +50,19 @@ local function assertInfixStrings(tree, lhs, op, rhs)
   assertString(tree.rhs, rhs)
 end
 
+local function assertInfixIdents(tree, lhs, op, rhs)
+  lu.assertEquals(tree.op, op)
+  assertIdentifier(tree.lhs, lhs)
+  assertIdentifier(tree.rhs, rhs)
+end
+
+local function assertAccessIdents(tree, lhs, rhs)
+  assertType(tree, "access_expression")
+  assertIdentifier(tree.lhs, lhs)
+  p.dlog(tree)
+  assertIdentifier(tree.index, rhs)
+end
+
 local function assertAssignmentNumber(tree, ident, numVal, scope)
   lu.assertEquals(tree.type, "assignment")
   assertIdentifier(tree.ident, ident)
@@ -399,35 +412,16 @@ function TestTableAccess()
   t.b
   t.a.b
   (1+2).b
+  f().a
 ]])
   lu.assertNil(err)
   lu.assertEquals(#tree, 4)
 
-  assertTableAccess(tree[1], "t", "a")
-  assertTableAccess(tree[2], "t", "b")
-  assertTableAccess(tree[3].base, "t", "a")
-  assertIdentifier(tree[3].base.base, "t")
-  assertString(tree[3].base.field, "t")
-  assertInfixNumbers(tree[4].base, 1, "+", 2)
-  assertString(tree[4].field, "b")
-  -- {
-  --   type = "table_access_expression",
-  --   base = {
-  --     type = "table_access_expression",
-  --     base = {
-  --       type = "identifier",
-  --       value = "t"
-  --     },
-  --     field = {
-  --       type = "string",
-  --       value = "a"
-  --     }
-  --   },
-  --   field = {
-  --     type = "string",
-  --     value = "b"
-  --   }
-  -- }
+  assertAccessIdents(tree[1], "t", "a")
+  assertAccessIdents(tree[2], "t", "b")
+  assertAccessIdents(tree[3].lhs, "t", "a")
+  lu.assertEquals(tree[3].op, ".")
+  assertIdentifier(tree[3].rhs, "b")
 end
 
 os.exit(lu.LuaUnit.run())
