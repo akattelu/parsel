@@ -664,7 +664,7 @@ function TestFunctionCall()
   lu.assertEquals(tree[6].args, {})
 end
 
-function TestFunctionCall()
+function TestMethodCall()
   local tree, err = p.parseProgramString([[
     x:y()
     x:y().a():b()
@@ -732,6 +732,26 @@ function TestNumericalFor()
   assertNumber(tree[2].step, 2)
   assertIdentifier(tree[2].block[1].func, "print")
   assertIdentifier(tree[2].block[1].args[1], "i")
+end
+
+function TestFunctionCallWithoutParen()
+  local tree, err = p.parseProgramString([[
+    require 'lib'
+    require"lib"
+    require("lib")
+  ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 3)
+  assertType(tree, "function_call_expression")
+
+  assertIdentifier(tree[1].func, "require")
+  assertString(tree[1].args[1], "lib")
+
+  assertIdentifier(tree[2].func, "require")
+  assertString(tree[2].args[1], "lib")
+
+  assertIdentifier(tree[3].func, "require")
+  assertString(tree[3].args[1], "lib")
 end
 
 function TestMisc()

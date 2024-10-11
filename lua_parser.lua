@@ -89,24 +89,36 @@ local tableListItemParser = p.map(p.lazy(function() return Parsers.expression en
   }
 end
 )
-local functionCallParser = p.map(
-  p.seq(
-    p.literal("("),
-    ows,
-    p.optional(
-      p.sepBy(p.lazy(function() return Parsers.expression end), p.seq(p.literal(","), ows))
-    ),
-    ows,
-    p.literal(")")
-  )
-  , function(seq)
-    return {
-      type = "function_call_expression",
-      args = seq[3] == p.nullResult and {} or seq[3],
-      func = "" -- should be filled in by caller
-    }
-  end
-)
+local functionCallParser =
+    p.either(
+      p.map(
+        p.seq(p.zeroOrMore(p.literal(" ")), p.lazy(function() return Parsers.string end)),
+        function(seq)
+          return {
+            type = "function_call_expression",
+            args = { seq[2] },
+            func = "" -- should be filled in by caller
+          }
+        end),
+      p.map(
+        p.seq(
+          p.literal("("),
+          ows,
+          p.optional(
+            p.sepBy(p.lazy(function() return Parsers.expression end), p.seq(p.literal(","), ows))
+          ),
+          ows,
+          p.literal(")")
+        )
+        , function(seq)
+          return {
+            type = "function_call_expression",
+            args = seq[3] == p.nullResult and {} or seq[3],
+            func = "" -- should be filled in by caller
+          }
+        end
+      )
+    )
 local methodCallParser = p.map(
   p.seq(
     p.literal(":"),
