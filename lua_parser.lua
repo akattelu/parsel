@@ -55,6 +55,12 @@ local nameWithDots = p.map(p.sepBy(p.lazy(function() return Parsers.ident end), 
   end
   return table.concat(values, ".")
 end)
+local accessKeyParser = p.map(p.seq(p.literal("."), p.lazy(function() return Parsers.ident end)), function(seq)
+  return {
+    type = "access_key_string",
+    name = seq[2].value
+  }
+end)
 
 
 -- Primitives
@@ -97,13 +103,13 @@ Parsers.parenthesizedExpression = p.map(
     p.lazy(function() return Parsers.expression end),
     p.literal(")")
   ), pick(2))
-Parsers.baseExpression = p.either(Parsers.primitiveExpression, Parsers.parenthesizedExpression)
+Parsers.baseExpression = p.any(Parsers.primitiveExpression, Parsers.parenthesizedExpression)
 Parsers.expression = p.any(
+  p.lazy(function() return Parsers.accessExpression end),
   p.lazy(function() return Parsers.functionExpression end),
   p.lazy(function() return Parsers.infixExpression end),
   p.lazy(function() return Parsers.notExpression end),
   p.lazy(function() return Parsers.prefixExpression end),
-  p.lazy(function() return Parsers.accessExpression end),
   Parsers.baseExpression
 )
 Parsers.prefixExpression = p.map(
@@ -119,7 +125,7 @@ Parsers.prefixExpression = p.map(
 Parsers.notExpression = p.map(
   p.seq(
     p.literal("not"),
-    p.literal(" "),
+    ws,
     Parsers.expression
   ), function(seq)
     return { type = "prefix_expression", op = "not", rhs = seq[3] }
@@ -137,14 +143,13 @@ Parsers.infixExpression = p.map(
     return { type = "infix_expression", lhs = seq[1], op = seq[3], rhs = seq[5] }
   end)
 
+
+-- TODO: handle left recursion for expression dot access chaining
 Parsers.accessExpression = p.map(
-  p.seq(
-    Parsers.baseExpression,
-    p.oneOrMore(p.map(p.seq(p.literal("."), Parsers.ident), pick(2)))
-  ),
+  p.seq(Parsers.baseExpression, accessKeyParser),
   function(seq)
     return {
-      type = "access_expression",
+      type = "table_access_expression",
       lhs = seq[1],
       index = seq[2]
     }

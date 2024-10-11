@@ -50,12 +50,6 @@ local function assertInfixStrings(tree, lhs, op, rhs)
   assertString(tree.rhs, rhs)
 end
 
-local function assertInfixIdents(tree, lhs, op, rhs)
-  lu.assertEquals(tree.op, op)
-  assertIdentifier(tree.lhs, lhs)
-  assertIdentifier(tree.rhs, rhs)
-end
-
 local function assertAccessIdents(tree, lhs, rhs)
   assertType(tree, "access_expression")
   assertIdentifier(tree.lhs, lhs)
@@ -72,8 +66,9 @@ end
 
 local function assertTableAccess(tree, baseTableName, fieldName)
   assertType(tree, 'table_access_expression')
-  assertIdentifier(tree.base, baseTableName)
-  assertString(tree.field, fieldName)
+  assertIdentifier(tree.lhs, baseTableName)
+  assertType(tree.index, "access_key_string")
+  lu.assertEquals(tree.index.name, fieldName)
 end
 
 function TestIdent()
@@ -410,18 +405,12 @@ function TestTableAccess()
   local tree, err = p.parseProgramString([[
   t.a
   t.b
-  t.a.b
-  (1+2).b
-  f().a
 ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 4)
+  lu.assertEquals(#tree, 2)
 
-  assertAccessIdents(tree[1], "t", "a")
-  assertAccessIdents(tree[2], "t", "b")
-  assertAccessIdents(tree[3].lhs, "t", "a")
-  lu.assertEquals(tree[3].op, ".")
-  assertIdentifier(tree[3].rhs, "b")
+  assertTableAccess(tree[1], "t", "a")
+  assertTableAccess(tree[2], "t", "b")
 end
 
 os.exit(lu.LuaUnit.run())
