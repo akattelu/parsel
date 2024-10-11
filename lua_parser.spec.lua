@@ -242,6 +242,36 @@ function TestIfThenStmt()
   lu.assertEquals(tree[3].then_block, {})
 end
 
+function TestIfThenElseStmt()
+  local tree, err = p.parseProgramString([[
+      if true == true then local x = 1 else local y = 2 end
+      if true == true then
+        local x = 1
+        local y = 2
+      else
+        local z = 3
+      end
+      if true then else end
+      ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 3)
+  assertType(tree[1], "conditional")
+  assertInfixBools(tree[1].cond, true, "==", true)
+  assertAssignmentNumber(tree[1].then_block[1], "x", 1)
+  assertAssignmentNumber(tree[1].else_block[1], "y", 2)
+
+  assertType(tree[2], "conditional")
+  assertInfixBools(tree[2].cond, true, "==", true)
+  assertAssignmentNumber(tree[2].then_block[1], "x", 1)
+  assertAssignmentNumber(tree[2].then_block[2], "y", 2)
+  assertAssignmentNumber(tree[2].else_block[1], "z", 3)
+
+  assertType(tree[3], "conditional")
+  assertBool(tree[3].cond, true)
+  lu.assertEquals(tree[3].then_block, {})
+  lu.assertEquals(tree[3].else_block, {})
+end
+
 function TestWhileStmt()
   local tree, err = p.parseProgramString([[
       while true do 1 + 2 end

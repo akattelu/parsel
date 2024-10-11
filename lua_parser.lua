@@ -200,13 +200,21 @@ Parsers.ifStmt = p.map(
     ws,
     block,
     ows,
+    p.optional(
+      p.seq(
+        p.literal("else"),
+        ws,
+        block,
+        ows
+      )
+    ),
     p.literal("end")
   ), function(seq)
     return {
       type = "conditional",
       cond = seq[3],
       then_block = seq[7],
-      else_block = nil
+      else_block = (seq[9] == p.nullResult and nil or seq[9][3]),
     }
   end)
 Parsers.whileStmt = p.map(
