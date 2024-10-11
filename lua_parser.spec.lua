@@ -60,8 +60,7 @@ end
 local function assertTableAccess(tree, baseTableName, fieldName)
   assertType(tree, 'table_access_expression')
   assertIdentifier(tree.lhs, baseTableName)
-  assertType(tree.index, "access_key_string")
-  lu.assertEquals(tree.index.name, fieldName)
+  assertString(tree.index, fieldName)
 end
 
 local function assertTableListValues(tree, items)
@@ -125,13 +124,13 @@ function TestTableAssignment()
 
   assertType(tree[1], "table_assignment")
   assertIdentifier(tree[1].table, "a")
-  lu.assertEquals(tree[1].index.name, "b")
+  assertString(tree[1].index, "b")
   assertNumber(tree[1].value, 1)
 
   assertType(tree[2], "table_assignment")
   assertIdentifier(tree[2].table.lhs, "a")
-  lu.assertEquals(tree[2].table.index.name, "b")
-  lu.assertEquals(tree[2].index.name, "c")
+  assertString(tree[2].table.index, "b")
+  assertString(tree[2].index, "c")
   assertNumber(tree[2].value, 2)
 end
 
@@ -526,10 +525,10 @@ function TestTableAccess()
   assertTableAccess(tree[1], "t", "a")
   assertTableAccess(tree[2], "t", "b")
   assertTableAccess(tree[3].lhs.lhs, "t", "a")
-  lu.assertEquals(tree[3].lhs.index.name, "b")
-  lu.assertEquals(tree[3].index.name, "c")
+  assertString(tree[3].lhs.index, "b")
+  assertString(tree[3].index, "c")
   assertInfixNumbers(tree[4].lhs, 1, "+", 2)
-  lu.assertEquals(tree[4].index.name, "a")
+  assertString(tree[4].index, "a")
 end
 
 function TestTableListLiterals()
@@ -568,6 +567,29 @@ function TestTableRecursive()
   assertTableListValues(tree[1].items[1].value, { 1 })
   assertTableListValues(tree[1].items[2].value, { 2 })
   assertTableDictValues(tree[2].items[1].value, { b = 2 })
+end
+
+function TestTableBracketAccess()
+  local tree, err = p.parseProgramString([[
+    x[1]
+    y[("access" .. "index")]
+    z[1]["hello"]
+    {}[2]
+  ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 4)
+  for _, v in ipairs(tree) do
+    assertType(v, "table_access_expression")
+  end
+  assertIdentifier(tree[1].lhs, "x")
+  assertNumber(tree[1].index, 1)
+  assertIdentifier(tree[2].lhs, "y")
+  assertInfixStrings(tree[2].index, "access", "..", "index")
+  assertIdentifier(tree[3].lhs.lhs, "z")
+  assertNumber(tree[3].lhs.index, 1)
+  assertString(tree[3].index, "hello")
+  assertTableListValues(tree[4].lhs, {})
+  assertNumber(tree[4].index, 1)
 end
 
 os.exit(lu.LuaUnit.run())

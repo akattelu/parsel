@@ -62,8 +62,8 @@ local nameWithDots = p.map(p.sepBy(p.lazy(function() return Parsers.ident end), 
 end)
 local accessKeyParser = p.map(p.seq(p.literal("."), p.lazy(function() return Parsers.ident end)), function(seq)
   return {
-    type = "access_key_string",
-    name = seq[2].value
+    type = "string",
+    value = seq[2].value
   }
 end)
 local tableDictItemParser = p.map(p.seq(
