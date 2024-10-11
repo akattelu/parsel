@@ -4,41 +4,6 @@
 -- @module Parsel
 local Parsel = {}
 
-local function printTable(t)
-  local printTable_cache = {}
-
-  local function sub_printTable(t2, indent)
-    if (printTable_cache[tostring(t2)]) then
-      print(indent .. "*" .. tostring(t2))
-    else
-      printTable_cache[tostring(t2)] = true
-      if (type(t2) == "table") then
-        for pos, val in pairs(t2) do
-          if (type(val) == "table") then
-            print(indent .. "[" .. pos .. "] => " .. tostring(t2) .. " {")
-            sub_printTable(val, indent .. string.rep(" ", string.len(pos) + 8))
-            print(indent .. string.rep(" ", string.len(pos) + 6) .. "}")
-          elseif (type(val) == "string") then
-            print(indent .. "[" .. pos .. '] => "' .. val .. '"')
-          else
-            print(indent .. "[" .. pos .. "] => " .. tostring(val))
-          end
-        end
-      else
-        print(indent .. tostring(t2))
-      end
-    end
-  end
-
-  if (type(t) == "table") then
-    print(tostring(t) .. " {")
-    sub_printTable(t, "  ")
-    print("}")
-  else
-    sub_printTable(t, "  ")
-  end
-end
-
 local function noMatch(parser, error)
   return {
     token = nil,
@@ -63,18 +28,6 @@ local Token = {
     }
   end
 }
-
-local function dlog(msg)
-  if os.getenv("DEBUG") == "1" then
-    if type(msg) == "table" then
-      printTable(msg)
-    else
-      print(msg)
-    end
-  end
-end
-
-Parsel.dlog = dlog
 
 local function insertToken(t, result)
   if result.tokens then

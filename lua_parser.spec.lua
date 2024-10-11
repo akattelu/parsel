@@ -2,6 +2,41 @@
 local lu = require 'luaunit'
 local p = require 'lua_parser'
 
+local function printTable(t)
+  local printTable_cache = {}
+
+  local function sub_printTable(t2, indent)
+    if (printTable_cache[tostring(t2)]) then
+      print(indent .. "*" .. tostring(t2))
+    else
+      printTable_cache[tostring(t2)] = true
+      if (type(t2) == "table") then
+        for pos, val in pairs(t2) do
+          if (type(val) == "table") then
+            print(indent .. "[" .. pos .. "] => " .. tostring(t2) .. " {")
+            sub_printTable(val, indent .. string.rep(" ", string.len(pos) + 8))
+            print(indent .. string.rep(" ", string.len(pos) + 6) .. "}")
+          elseif (type(val) == "string") then
+            print(indent .. "[" .. pos .. '] => "' .. val .. '"')
+          else
+            print(indent .. "[" .. pos .. "] => " .. tostring(val))
+          end
+        end
+      else
+        print(indent .. tostring(t2))
+      end
+    end
+  end
+
+  if (type(t) == "table") then
+    print(tostring(t) .. " {")
+    sub_printTable(t, " ")
+    print("}")
+  else
+    sub_printTable(t, " ")
+  end
+end
+
 local function assertType(tree, expected)
   if type(tree) == "table" then
     for _, v in ipairs(tree) do
@@ -748,7 +783,6 @@ function TestParseVeryBigProgram()
     contents = file:read("*a")
   end
   local tree, err = p.parseProgramString(contents)
-  p.dlog(tree)
   lu.assertNil(err)
 end
 

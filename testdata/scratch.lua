@@ -60,18 +60,6 @@ local Token = {
   end
 }
 
-local function dlog(msg)
-  if os.getenv("DEBUG") == "1" then
-    if type(msg) == "table" then
-      printTable(msg)
-    else
-      print(msg)
-    end
-  end
-end
-
-Parsel.dlog = dlog
-
 local function insertToken(t, result)
   if result.tokens then
     table.insert(t, result.tokens)

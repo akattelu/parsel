@@ -6,11 +6,6 @@ local Parsers = {}
 
 -- Helper functions
 
--- Mapper that prints the result before returning it as is
-local function printed(parser)
-  return p.map(parser, function(res) p.dlog(res) end)
-end
-
 --- Check if word is a lua keyword
 local function isKeyword(word)
   local keywords = {
@@ -598,23 +593,5 @@ end
 Parsers.parseProgramString = function(s)
   return Parsers.parseString(s, Parsers.program)
 end
-
-
--- debugging
-Parsers.dlog = p.dlog
-
--- Main
--- local file = io.open("sample.lua", "r")
--- local contents
--- if file then
---   contents = file:read("*a")
--- end
--- local parsed = p.parse(contents, Parsers.program)
--- if not parsed.parser:succeeded() then
---   print(parsed.parser.error)
---   os.exit(1)
--- end
--- p.dlog(parsed.result)
--- os.exit(0)
 
 return Parsers
