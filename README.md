@@ -74,6 +74,6 @@ Parsel.exclude (p, exclusionFunc) -- Fails a parser if it matches condition set 
 [x] single quote strings
 [x] local functions
 [x] generic for
-[ ] numerical for
+[x] numerical for
 [x] table literal with trailing comma
 [ ] table literal expression key syntax

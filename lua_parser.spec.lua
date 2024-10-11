@@ -724,11 +724,12 @@ function TestNumericalFor()
   assertIdentifier(tree[1].block[1].args[1], "i")
   assertIdentifier(tree[1].control, "i")
 
-  assertNumber(tree[1].start, 1)
-  assertNumber(tree[1].limit, 10)
-  assertNumber(tree[1].step, 2)
-  assertIdentifier(tree[1].block[1].func, "print")
-  assertIdentifier(tree[1].block[1].args[1], "i")
+  assertIdentifier(tree[2].control, "i")
+  assertNumber(tree[2].start, 1)
+  assertNumber(tree[2].limit, 10)
+  assertNumber(tree[2].step, 2)
+  assertIdentifier(tree[2].block[1].func, "print")
+  assertIdentifier(tree[2].block[1].args[1], "i")
 end
 
 function TestMisc()
@@ -746,9 +747,8 @@ function TestParseVeryBigProgram()
   if file then
     contents = file:read("*a")
   end
-  -- lu.skip("skipped")
   local tree, err = p.parseProgramString(contents)
-  -- p.dlog(tree)
+  p.dlog(tree)
   lu.assertNil(err)
 end
 

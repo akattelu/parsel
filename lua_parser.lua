@@ -424,6 +424,47 @@ Parsers.genericForStmt = p.map(
   end
 )
 
+Parsers.numericForStmt = p.map(
+  p.seq(
+    p.literal("for"),
+    ws,
+    p.seq(
+      Parsers.ident
+      , ows
+      , p.literal("=")
+      , ows
+      , Parsers.expression -- start
+    ),
+    ows,
+    p.literal(","),
+    ows,
+    Parsers.expression, -- limit
+    ows,
+    p.optional(
+      p.seq(
+        p.literal(","),
+        ows,
+        Parsers.expression -- step
+      )
+    ),
+    ows,
+    p.literal("do"),
+    ws,
+    block,
+    ows,
+    p.literal("end")
+  )
+  , function(seq)
+    return {
+      type = "numeric_for",
+      control = seq[3][1],
+      start = seq[3][5],
+      limit = seq[7],
+      step = seq[9] ~= p.nullResult and seq[9][3] or { type = "number", value = 1 },
+      block = seq[13]
+    }
+  end
+)
 Parsers.repeatStmt = p.map(
   p.seq(
     p.literal("repeat"),
@@ -532,6 +573,7 @@ Parsers.statement = p.any(
   , Parsers.ifStmt
   , Parsers.whileStmt
   , Parsers.genericForStmt
+  , Parsers.numericForStmt
   , Parsers.repeatStmt
   , Parsers.returnStmt
   , Parsers.functionStmt
