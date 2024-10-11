@@ -217,6 +217,54 @@ Parsers.ifStmt = p.map(
       else_block = (seq[9] == p.nullResult and nil or seq[9][3]),
     }
   end)
+Parsers.switchStmt = p.map(
+  p.seq(
+    p.literal("if"),
+    ws,
+    Parsers.expression,
+    ws,
+    p.literal("then"),
+    ws,
+    block,
+    ows,
+    p.oneOrMore(
+      p.seq(
+        p.literal("elseif"),
+        ws,
+        Parsers.expression,
+        ws,
+        p.literal("then"),
+        ws,
+        block,
+        ows
+      )),
+    p.seq(
+      p.literal("else"),
+      ws,
+      block,
+      ows
+    ),
+    p.literal("end")
+  ), function(seq)
+    local cases = {}
+    table.insert(cases, {
+      type = "switch_case",
+      cond = seq[3],
+      block = seq[7],
+    })
+    for _, v in ipairs(seq[9]) do
+      table.insert(cases, {
+        type = "switch_case",
+        cond = v[3],
+        block = v[7],
+      })
+    end
+    return {
+      type = "switch",
+      cases = cases,
+      else_block = seq[10][3],
+    }
+  end)
 Parsers.whileStmt = p.map(
   p.seq(
     p.literal("while"),
@@ -322,6 +370,7 @@ Parsers.statement = p.any(
   lineComment
   , Parsers.assignment
   , Parsers.declaration
+  , Parsers.switchStmt
   , Parsers.ifStmt
   , Parsers.whileStmt
   , Parsers.repeatStmt

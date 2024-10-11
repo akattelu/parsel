@@ -272,6 +272,30 @@ function TestIfThenElseStmt()
   lu.assertEquals(tree[3].else_block, {})
 end
 
+function TestSwitchStatement()
+  local tree, err = p.parseProgramString([[
+      if 1 == 2 then
+        local x = 1
+      elseif 2 == 3 then
+        local y = 2
+      elseif 3 == 4 then
+        local z = 3
+      else
+        local n = 4
+      end
+      ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 1)
+  assertType(tree[1], "switch")
+  assertInfixNumbers(tree[1].cases[1].cond, 1, "==", 2)
+  assertAssignmentNumber(tree[1].cases[1].block[1], "x", 1)
+  assertInfixNumbers(tree[1].cases[2].cond, 2, "==", 3)
+  assertAssignmentNumber(tree[1].cases[2].block[1], "y", 2)
+  assertInfixNumbers(tree[1].cases[3].cond, 3, "==", 4)
+  assertAssignmentNumber(tree[1].cases[3].block[1], "z", 3)
+  assertAssignmentNumber(tree[1].else_block[1], "n", 4)
+end
+
 function TestWhileStmt()
   local tree, err = p.parseProgramString([[
       while true do 1 + 2 end
