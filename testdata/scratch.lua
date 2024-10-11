@@ -259,30 +259,30 @@ end
 --local untilEnd = parsel.untilLiteral('end')
 --parsel.parse("if then end").result
 -- -- "if then "
--- function Parsel.untilLiteral(literal)
---   return function(parser)
---     local start = parser.pos
---     local stride = #literal - 1
---     local strEnd = #parser.input - stride
+function Parsel.untilLiteral(literal)
+  return function(parser)
+    local start = parser.pos
+    local stride = #literal - 1
+    local strEnd = #parser.input - stride
 
---     for i = start, strEnd, 1 do
---       local slice = string.sub(parser.input, i, i + stride)
---       if slice == literal then
---         local capture = string.sub(parser.input, start, i - 1)
---         return {
---           token = Token.new(capture, start, i - 1),
---           result = capture,
---           parser = parser:advance(i - start)
---         }
---       end
---     end
+    for i = start, strEnd, 1 do
+      local slice = string.sub(parser.input, i, i + stride)
+      if slice == literal then
+        local capture = string.sub(parser.input, start, i - 1)
+        return {
+          token = Token.new(capture, start, i - 1),
+          result = capture,
+          parser = parser:advance(i - start)
+        }
+      end
+    end
 
---     local inputLen = #parser.input
---     local capture = string.sub(parser.input, start, inputLen)
---     return {
---       token = Token.new(capture, start, inputLen),
---       parser = parser:advance(inputLen - start),
---       result = capture
---     }
---   end
--- end
+    local inputLen = #parser.input
+    local capture = string.sub(parser.input, start, inputLen)
+    return {
+      token = Token.new(capture, start, inputLen),
+      parser = parser:advance(inputLen - start),
+      result = capture
+    }
+  end
+end

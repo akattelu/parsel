@@ -702,6 +702,35 @@ function TestGenericFor()
   assertIdentifier(tree[1].block[1].args[2], "v")
 end
 
+function TestNumericalFor()
+  local tree, err = p.parseProgramString([[
+    for i = 1, 10 do
+      print(i)
+    end
+
+    for i = 1, 10, 2 do
+      print(i)
+    end
+  ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 2)
+  assertType(tree, "numeric_for")
+
+  assertIdentifier(tree[1].control, "i")
+  assertNumber(tree[1].start, 1)
+  assertNumber(tree[1].limit, 10)
+  assertNumber(tree[1].step, 1)
+  assertIdentifier(tree[1].block[1].func, "print")
+  assertIdentifier(tree[1].block[1].args[1], "i")
+  assertIdentifier(tree[1].control, "i")
+
+  assertNumber(tree[1].start, 1)
+  assertNumber(tree[1].limit, 10)
+  assertNumber(tree[1].step, 2)
+  assertIdentifier(tree[1].block[1].func, "print")
+  assertIdentifier(tree[1].block[1].args[1], "i")
+end
+
 function TestMisc()
   lu.skip("comment test")
   -- TODO: fix
