@@ -763,7 +763,7 @@ function TestFunctionCallWithoutParen()
 end
 
 function TestMisc()
-  local tree, err = p.parseProgramString([[
+  local _, err = p.parseProgramString([[
     -- test comment
     -- test comment 2
   ]])
@@ -776,7 +776,7 @@ function TestParseVeryBigProgram()
   if file then
     contents = file:read("*a")
   end
-  local tree, err = p.parseProgramString(contents)
+  local _, err = p.parseProgramString(contents)
   lu.assertNil(err)
 end
 
