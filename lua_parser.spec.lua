@@ -658,4 +658,24 @@ function TestFunctionCall()
   lu.assertEquals(tree[2].args, {})
 end
 
+function TestMisc()
+  local tree, err = p.parseProgramString([[
+    local printTable_cache = {}
+  ]])
+  p.dlog(tree)
+  lu.assertNil(err)
+end
+
+function TestParseVeryBigProgram()
+  lu.skip("skipped")
+  local file = io.open("testdata/scratch.lua", "r")
+  local contents
+  if file then
+    contents = file:read("*a")
+  end
+  local tree, err = p.parseProgramString(contents)
+  p.dlog(tree)
+  lu.assertNil(err)
+end
+
 os.exit(lu.LuaUnit.run())

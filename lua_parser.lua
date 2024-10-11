@@ -137,7 +137,7 @@ local methodCallParser = p.map(
 
 
 -- Primitives
-Parsers.ident = p.exclude(p.map(p.seq(p.letter(), p.zeroOrMore(p.either(p.letter(), p.digit()))),
+Parsers.ident = p.exclude(p.map(p.seq(p.letter(), p.zeroOrMore(p.any(p.letter(), p.digit(), p.literal("_")))),
   function(tokens) return { type = "identifier", value = tokens[1] .. table.concat(tokens[2], "") } end), function(n)
   return isKeyword(n.value)
 end)
