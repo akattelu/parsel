@@ -63,7 +63,7 @@ Parsel.exclude (p, exclusionFunc) -- Fails a parser if it matches condition set 
 [ ] access operation with brackets
 [ ] function calls
 [ ] method access syntax
-[ ] table assignment
+[x] table assignment
 [ ] bit and misc operators
 [x] comments
 [x] comparison operators

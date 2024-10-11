@@ -50,12 +50,6 @@ local function assertInfixStrings(tree, lhs, op, rhs)
   assertString(tree.rhs, rhs)
 end
 
-local function assertAccessIdents(tree, lhs, rhs)
-  assertType(tree, "access_expression")
-  assertIdentifier(tree.lhs, lhs)
-  assertIdentifier(tree.index, rhs)
-end
-
 local function assertAssignmentNumber(tree, ident, numVal, scope)
   lu.assertEquals(tree.type, "assignment")
   assertIdentifier(tree.ident, ident)
@@ -119,6 +113,26 @@ function TestAssignment()
   assertAssignmentNumber(tree[1], "x", 2)
   assertAssignmentNumber(tree[2], "y", 5, "GLOBAL")
   assertAssignmentNumber(tree[3], "z", 10)
+end
+
+function TestTableAssignment()
+  local tree, err = p.parseProgramString([[
+    a.b = 1
+    a.b.c = 2
+  ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 2)
+
+  assertType(tree[1], "table_assignment")
+  assertIdentifier(tree[1].table, "a")
+  lu.assertEquals(tree[1].index.name, "b")
+  assertNumber(tree[1].value, 1)
+
+  assertType(tree[2], "table_assignment")
+  assertIdentifier(tree[2].table.lhs, "a")
+  lu.assertEquals(tree[2].table.index.name, "b")
+  lu.assertEquals(tree[2].index.name, "c")
+  assertNumber(tree[2].value, 2)
 end
 
 function TestPrimitives()

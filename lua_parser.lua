@@ -380,6 +380,23 @@ Parsers.assignment =
         }
       end)
 
+Parsers.tableAssignment =
+    p.map(
+      p.seq(
+        Parsers.accessExpression
+        , ows
+        , p.literal("=")
+        , ows
+        , Parsers.expression
+      ), function(results)
+        return {
+          type = "table_assignment",
+          table = results[1].lhs,
+          index = results[1].index,
+          value = results[5],
+        }
+      end)
+
 Parsers.returnStmt = p.map(
   p.seq(
     p.literal('return'), ws, Parsers.expression
@@ -420,6 +437,7 @@ Parsers.functionStmt = p.map(
 
 Parsers.statement = p.any(
   lineComment
+  , Parsers.tableAssignment
   , Parsers.assignment
   , Parsers.declaration
   , Parsers.switchStmt
