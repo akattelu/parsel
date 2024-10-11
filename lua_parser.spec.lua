@@ -201,11 +201,17 @@ function TestNotExpr()
 end
 
 function TestPrefixExpression()
-  local tree, err = p.parseProgramString([[-1]])
+  local tree, err = p.parseProgramString([[
+    -1
+    #dict
+    ]])
   lu.assertNil(err)
   assertNumber(tree[1].rhs, 1)
   lu.assertEquals(tree[1].op, "-")
   lu.assertEquals(tree[1].type, "prefix_expression")
+  assertIdentifier(tree[2].rhs, "dict")
+  lu.assertEquals(tree[2].op, "#")
+  lu.assertEquals(tree[2].type, "prefix_expression")
 end
 
 function TestInfix()

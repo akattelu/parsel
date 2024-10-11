@@ -166,7 +166,7 @@ Parsers.expression = p.any(
 )
 Parsers.prefixExpression = p.map(
   p.exclude(p.seq(
-    p.anyLiteral("-"),
+    p.anyLiteral("-", "#"),
     ows,
     Parsers.expression
   ), function(seq)
