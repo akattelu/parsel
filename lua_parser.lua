@@ -345,12 +345,12 @@ Parsers.switchStmt = p.map(
         block,
         ows
       )),
-    p.seq(
+    p.optional(p.seq(
       p.literal("else"),
       ws,
       block,
       ows
-    ),
+    )),
     p.literal("end")
   ), function(seq)
     local cases = {}
@@ -369,7 +369,7 @@ Parsers.switchStmt = p.map(
     return {
       type = "switch",
       cases = cases,
-      else_block = seq[10][3],
+      else_block = seq[10] == p.nullResult and {} or seq[10][3],
     }
   end)
 Parsers.whileStmt = p.map(

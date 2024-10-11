@@ -347,10 +347,17 @@ function TestSwitchStatement()
       else
         local n = 4
       end
+
+      if 1 == 2 then
+        local x = 1
+      elseif 2 == 3 then
+        local y = 2
+      end
       ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 1)
-  assertType(tree[1], "switch")
+  lu.assertEquals(#tree, 2)
+  assertType(tree, "switch")
+
   assertInfixNumbers(tree[1].cases[1].cond, 1, "==", 2)
   assertAssignmentNumber(tree[1].cases[1].block[1], "x", 1)
   assertInfixNumbers(tree[1].cases[2].cond, 2, "==", 3)
@@ -358,6 +365,12 @@ function TestSwitchStatement()
   assertInfixNumbers(tree[1].cases[3].cond, 3, "==", 4)
   assertAssignmentNumber(tree[1].cases[3].block[1], "z", 3)
   assertAssignmentNumber(tree[1].else_block[1], "n", 4)
+
+  assertInfixNumbers(tree[2].cases[1].cond, 1, "==", 2)
+  assertAssignmentNumber(tree[2].cases[1].block[1], "x", 1)
+  assertInfixNumbers(tree[2].cases[2].cond, 2, "==", 3)
+  assertAssignmentNumber(tree[2].cases[2].block[1], "y", 2)
+  lu.assertEquals(tree[2].else_block, {})
 end
 
 function TestWhileStmt()

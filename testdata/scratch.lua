@@ -26,59 +26,59 @@ local function printTable(t)
     end
   end
 
-  -- if (type(t) == "table") then
-  --   print(tostring(t) .. " {")
-  --   sub_printTable(t, "  ")
-  --   print("}")
-  -- else
-  --   sub_printTable(t, "  ")
-  -- end
+  if (type(t) == "table") then
+    print(tostring(t) .. " {")
+    sub_printTable(t, "  ")
+    print("}")
+  else
+    sub_printTable(t, "  ")
+  end
 end
 
--- local function noMatch(parser, error)
---   return {
---     token = nil,
---     parser = parser:withError(error),
---     result = nil
---   }
--- end
+local function noMatch(parser, error)
+  return {
+    token = nil,
+    parser = parser:withError(error),
+    result = nil
+  }
+end
 
 
 --- a result indicating an optional match
 -- returned as a placeholder when an optional match did not succeed
 -- @field type always "NULL"
 -- @see Parsel.optional
--- Parsel.nullResult = { type = "NULL" }
+Parsel.nullResult = { type = "NULL" }
 
--- local Token = {
---   new = function(match, startPos, endPos)
---     return {
---       match = match,
---       startPos = startPos,
---       endPos = endPos
---     }
---   end
--- }
+local Token = {
+  new = function(match, startPos, endPos)
+    return {
+      match = match,
+      startPos = startPos,
+      endPos = endPos
+    }
+  end
+}
 
--- local function dlog(msg)
---   if os.getenv("DEBUG") == "1" then
---     if type(msg) == "table" then
---       printTable(msg)
---     else
---       print(msg)
---     end
---   end
--- end
+local function dlog(msg)
+  if os.getenv("DEBUG") == "1" then
+    if type(msg) == "table" then
+      printTable(msg)
+    else
+      print(msg)
+    end
+  end
+end
 
--- Parsel.dlog = dlog
+Parsel.dlog = dlog
 
--- local function insertToken(t, result)
---   if result.tokens then
---     table.insert(t, result.tokens)
---   elseif result.token then
---     table.insert(t, result.token)
---   end
--- end
+local function insertToken(t, result)
+  if result.tokens then
+    table.insert(t, result.tokens)
+  elseif result.token then
+    table.insert(t, result.token)
+  end
+end
 
 -- Parser = {
 --   new = function(input, pos, error)
