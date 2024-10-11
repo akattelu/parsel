@@ -96,8 +96,6 @@ end
 )
 local functionCallParser = p.map(
   p.seq(
-  -- p.lazy(function() return Parsers.expression end),
-  -- ows,
     p.literal("("),
     ows,
     p.optional(
@@ -110,7 +108,29 @@ local functionCallParser = p.map(
     return {
       type = "function_call_expression",
       args = seq[3] == p.nullResult and {} or seq[3],
-      func = "" -- TODO: should be filled in by something else
+      func = "" -- should be filled in by caller
+    }
+  end
+)
+local methodCallParser = p.map(
+  p.seq(
+    p.literal(":"),
+    p.lazy(function() return Parsers.ident end),
+    ows,
+    p.literal("("),
+    ows,
+    p.optional(
+      p.sepBy(p.lazy(function() return Parsers.expression end), p.seq(p.literal(","), ows))
+    ),
+    ows,
+    p.literal(")")
+  )
+  , function(seq)
+    return {
+      type = "method_call_expression",
+      args = seq[6] == p.nullResult and {} or seq[6],
+      method = seq[2],
+      self = "" -- filled in later
     }
   end
 )
@@ -226,7 +246,8 @@ Parsers.infixExpression = p.map(
 -- handle left recursion for expression dot access chaining
 -- by greedily taking as many access as possible with oneOrMore
 Parsers.accessExpression = p.map(
-  p.seq(Parsers.baseExpression, p.oneOrMore(p.any(functionCallParser, bracketAccessKeyParser, dotAccessKeyParser))),
+  p.seq(Parsers.baseExpression,
+    p.oneOrMore(p.any(methodCallParser, functionCallParser, bracketAccessKeyParser, dotAccessKeyParser))),
   function(seq)
     local lhs
     local lastLHS = seq[1]
@@ -234,6 +255,9 @@ Parsers.accessExpression = p.map(
       if v.type == "function_call_expression" then
         lhs = v
         lhs.func = lastLHS
+      elseif v.type == "method_call_expression" then
+        lhs = v
+        lhs.self = lastLHS
       else
         lhs = {
           type = "table_access_expression",

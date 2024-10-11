@@ -636,4 +636,26 @@ function TestFunctionCall()
   lu.assertEquals(tree[6].args, {})
 end
 
+function TestFunctionCall()
+  local tree, err = p.parseProgramString([[
+    x:y()
+    x:y().a():b()
+  ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 2)
+  assertType(tree, "method_call_expression")
+
+  assertIdentifier(tree[1].self, "x")
+  assertIdentifier(tree[1].method, "y")
+  lu.assertEquals(tree[1].args, {})
+
+  assertIdentifier(tree[2].self.func.lhs.self, "x")
+  assertIdentifier(tree[2].self.func.lhs.method, "y")
+  lu.assertEquals(tree[2].self.func.lhs.args, {})
+  assertString(tree[2].self.func.index, "a")
+  lu.assertEquals(tree[2].self.args, {})
+  assertIdentifier(tree[2].method, "b")
+  lu.assertEquals(tree[2].args, {})
+end
+
 os.exit(lu.LuaUnit.run())
