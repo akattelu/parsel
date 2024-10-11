@@ -6,6 +6,11 @@ local Parsers = {}
 
 -- Helper functions
 
+-- Mapper that prints the result before returning it as is
+local function printed(parser)
+  return p.map(parser, function(res) p.dlog(res) end)
+end
+
 --- Check if word is a lua keyword
 local function isKeyword(word)
   local keywords = {
@@ -61,6 +66,27 @@ local accessKeyParser = p.map(p.seq(p.literal("."), p.lazy(function() return Par
     name = seq[2].value
   }
 end)
+local tableDictItemParser = p.map(p.seq(
+  p.lazy(function() return Parsers.ident end),
+  ows,
+  p.literal("="),
+  ows,
+  p.lazy(function() return Parsers.expression end)
+), function(seq)
+  return {
+    type = "table_item",
+    value = seq[5],
+    key = seq[1].value -- use the raw string from the identifier
+  }
+end)
+local tableListItemParser = p.map(p.lazy(function() return Parsers.expression end), function(expr)
+  return {
+    type = "table_item",
+    value = expr,
+    key = 0 -- fill this in later for numerical indices
+  }
+end
+)
 
 
 -- Primitives
@@ -94,9 +120,35 @@ Parsers.boolean = p.map(p.anyLiteral("true", "false"), function(val)
   return { type = "boolean", value = val == "true" and true or false }
 end)
 Parsers.nilValue = p.map(p.literal("nil"), function(_) return { type = "nil" } end)
+Parsers.tableLiteral = p.map(
+  p.seq(
+    p.literal("{"),
+    ows,
+    p.optional(
+      p.either(
+        p.sepBy(tableDictItemParser, p.seq(p.literal(','), ows))
+        , p.map(p.sepBy(tableListItemParser, p.seq(p.literal(','), ows)), function(itemList)
+          for i, v in ipairs(itemList) do
+            v.key = i -- assign raw numerical index
+          end
+          return itemList
+        end)
+      )
+    ),
+    ows,
+    p.literal("}")
+  ),
+  function(seq)
+    return {
+      type = "table_literal",
+      items = seq[3] == p.nullResult and {} or seq[3]
+    }
+  end
+)
 
 -- Expressions
-Parsers.primitiveExpression = p.any(Parsers.number, Parsers.string, Parsers.boolean, Parsers.nilValue, Parsers.ident)
+Parsers.primitiveExpression = p.any(Parsers.number, Parsers.string, Parsers.boolean, Parsers.nilValue,
+  Parsers.tableLiteral, Parsers.ident)
 Parsers.parenthesizedExpression = p.map(
   p.seq(
     p.literal("("),

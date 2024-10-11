@@ -53,7 +53,6 @@ end
 local function assertAccessIdents(tree, lhs, rhs)
   assertType(tree, "access_expression")
   assertIdentifier(tree.lhs, lhs)
-  p.dlog(tree)
   assertIdentifier(tree.index, rhs)
 end
 
@@ -73,8 +72,26 @@ end
 
 local function assertTableListValues(tree, items)
   assertType(tree, "table_literal")
-  for i, v in tree.items do
-    lu.assertEquals(v.value, items[i])
+  lu.assertEquals(#tree.items, #items)
+  for i, v in ipairs(tree.items) do
+    assertType(v, "table_item")
+    lu.assertEquals(v.key, i)
+    lu.assertEquals(v.value.value, items[i])
+  end
+end
+
+local function assertTableDictValues(tree, items)
+  assertType(tree, "table_literal")
+  local expectedLen = 0
+  for _, _ in pairs(items) do
+    expectedLen = expectedLen + 1
+  end
+  lu.assertEquals(#tree.items, expectedLen)
+  for _, actual in pairs(tree.items) do
+    assertType(actual, "table_item")
+    lu.assertNotNil(actual.key)
+    local expected = items[actual.key]
+    lu.assertEquals(actual.value.value, expected)
   end
 end
 
@@ -500,16 +517,23 @@ function TestTableDictLiterals()
       { a = 1 }
       { a = 1, b = 2, c = 3 }
     ]])
-  lu.fail("unimplemented")
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 3)
+  assertTableDictValues(tree[1], {})
+  assertTableDictValues(tree[2], { a = 1 })
+  assertTableDictValues(tree[3], { a = 1, b = 2, c = 3 })
 end
 
 function TestTableRecursive()
   local tree, err = p.parseProgramString([[
-      {}
       { { 1 }, { 2 } }
       { a = { b = 2 } }
     ]])
-  lu.fail("unimplemented")
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 2)
+  assertTableListValues(tree[1].items[1].value, { 1 })
+  assertTableListValues(tree[1].items[2].value, { 2 })
+  assertTableDictValues(tree[2].items[1].value, { b = 2 })
 end
 
 os.exit(lu.LuaUnit.run())

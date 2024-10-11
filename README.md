@@ -58,7 +58,7 @@ Parsel.exclude (p, exclusionFunc) -- Fails a parser if it matches condition set 
 ## TODO
 [x] elseif 
 [x] else 
-[ ] tables
+[x] table literals
 [x] access operation with dot
 [ ] access operation with brackets
 [ ] function calls
