@@ -71,6 +71,13 @@ local function assertTableAccess(tree, baseTableName, fieldName)
   lu.assertEquals(tree.index.name, fieldName)
 end
 
+local function assertTableListValues(tree, items)
+  assertType(tree, "table_literal")
+  for i, v in tree.items do
+    lu.assertEquals(v.value, items[i])
+  end
+end
+
 function TestIdent()
   local _, err = p.parseString("if", p.ident)
   lu.assertStrContains(err, "ignore condition was true after parsing")
@@ -472,6 +479,37 @@ function TestTableAccess()
   lu.assertEquals(tree[3].index.name, "c")
   assertInfixNumbers(tree[4].lhs, 1, "+", 2)
   lu.assertEquals(tree[4].index.name, "a")
+end
+
+function TestTableListLiterals()
+  local tree, err = p.parseProgramString([[
+      {}
+      { 1 }
+      { 1, 2, 3 }
+    ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 3)
+  assertTableListValues(tree[1], {})
+  assertTableListValues(tree[2], { 1 })
+  assertTableListValues(tree[3], { 1, 2, 3 })
+end
+
+function TestTableDictLiterals()
+  local tree, err = p.parseProgramString([[
+      {}
+      { a = 1 }
+      { a = 1, b = 2, c = 3 }
+    ]])
+  lu.fail("unimplemented")
+end
+
+function TestTableRecursive()
+  local tree, err = p.parseProgramString([[
+      {}
+      { { 1 }, { 2 } }
+      { a = { b = 2 } }
+    ]])
+  lu.fail("unimplemented")
 end
 
 os.exit(lu.LuaUnit.run())
