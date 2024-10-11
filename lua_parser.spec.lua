@@ -405,12 +405,19 @@ function TestTableAccess()
   local tree, err = p.parseProgramString([[
   t.a
   t.b
+  t.a.b.c
+  (1+2).a
 ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 2)
+  lu.assertEquals(#tree, 4)
 
   assertTableAccess(tree[1], "t", "a")
   assertTableAccess(tree[2], "t", "b")
+  assertTableAccess(tree[3].lhs.lhs, "t", "a")
+  lu.assertEquals(tree[3].lhs.index.name, "b")
+  lu.assertEquals(tree[3].index.name, "c")
+  assertInfixNumbers(tree[4].lhs, 1, "+", 2)
+  lu.assertEquals(tree[4].index.name, "a")
 end
 
 os.exit(lu.LuaUnit.run())

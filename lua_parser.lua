@@ -144,15 +144,23 @@ Parsers.infixExpression = p.map(
   end)
 
 
--- TODO: handle left recursion for expression dot access chaining
+-- handle left recursion for expression dot access chaining
+-- by greedily taking as many access as possible with oneOrMore
 Parsers.accessExpression = p.map(
-  p.seq(Parsers.baseExpression, accessKeyParser),
+  p.seq(Parsers.baseExpression, p.oneOrMore(accessKeyParser)),
   function(seq)
-    return {
-      type = "table_access_expression",
-      lhs = seq[1],
-      index = seq[2]
-    }
+    local lhs, rhs
+    local lastLHS = seq[1]
+    for _, v in ipairs(seq[2]) do
+      rhs = v
+      lhs = {
+        type = "table_access_expression",
+        lhs = lastLHS,
+        index = rhs
+      }
+      lastLHS = lhs
+    end
+    return lhs
   end
 )
 
