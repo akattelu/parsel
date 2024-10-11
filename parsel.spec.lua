@@ -287,6 +287,16 @@ function TestSepBy()
   assertResult(parsed, { "a" })
 end
 
+function TestSepByAllowTrailing()
+  local commaSep = parsel.sepByAllowTrailing(parsel.letter(), parsel.literal(","))
+  local parsed = parsel.parse("a,b,c,d,", commaSep)
+  assertResult(parsed, { "a", "b", "c", "d" })
+  lu.assertEquals(parsed.parser.pos, 9)
+
+  parsed = parsel.parse("a", commaSep)
+  assertResult(parsed, { "a" })
+end
+
 function TestExclude()
   local ignoreOdd = parsel.exclude(parsel.digit(), function(d) return tonumber(d) % 2 == 1 end)
   local parsed    = parsel.parse("2", ignoreOdd)

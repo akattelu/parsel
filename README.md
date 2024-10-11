@@ -52,6 +52,7 @@ Parsel.zeroOrMore (p) -- Parse zero or more instances of combinators
 Parsel.optional (p) -- Optionally parse a combinator, return Parsel.nullResult if not matched
 Parsel.lazy (f) -- Returns a parser that lazily evaluates a function
 Parsel.sepBy (p, delim) -- Match parsers delimited by successful parse of delim
+Parsel.sepByAllowTrailing (p, delim) -- Like sepBy, but allow one trailing delim
 Parsel.exclude (p, exclusionFunc) -- Fails a parser if it matches condition set by exclusionFunc
 ```
 
@@ -74,3 +75,5 @@ Parsel.exclude (p, exclusionFunc) -- Fails a parser if it matches condition set 
 [x] local functions
 [x] generic for
 [ ] numerical for
+[x] table literal with trailing comma
+[ ] table literal expression key syntax

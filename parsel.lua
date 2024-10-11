@@ -481,6 +481,44 @@ function Parsel.sepBy(p, delim)
   end
 end
 
+--- Match parsers delimited by successful parse of delim, but allow a trailing delimiter
+-- @param p the parser to match repeatedly
+-- @param delim the parser to match as a delimiter
+-- @return a parser function
+-- @see Parsel.sepBy
+function Parsel.sepByAllowTrailing(p, delim)
+  return function(parser)
+    local parsed = parser:run(p)
+    if not parsed.parser:succeeded() then
+      return noMatch(parsed.parser, parsed.parser.error)
+    end
+    local tokens = {}
+    insertToken(tokens, parsed)
+    local results = { parsed.result }
+    local current = parsed
+
+    while true do
+      local afterDelim = current.parser:run(delim)
+      if not afterDelim.parser:succeeded() then
+        break
+      end
+
+      current = afterDelim.parser:run(p)
+      if not current.parser:succeeded() then
+        current = afterDelim -- rewind
+        break
+      end
+      insertToken(tokens, current)
+      table.insert(results, current.result)
+    end
+    return {
+      tokens = tokens,
+      result = results,
+      parser = current.parser,
+    }
+  end
+end
+
 --- Fails a parser if it matches condition set by exclusionFunc
 -- @param p parser to wrap
 -- @param exclusionFunc if this function returns true, the parser will fail

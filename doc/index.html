@@ -152,6 +152,10 @@
  fails if parsing a delimiter then parser fails, or if the first parsing of p fails</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#Parsel.sepByAllowTrailing">Parsel.sepByAllowTrailing (p, delim)</a></td>
+	<td class="summary">Match parsers delimited by successful parse of delim, but allow a trailing delimiter</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#Parsel.exclude">Parsel.exclude (p, exclusionFunc)</a></td>
 	<td class="summary">Fails a parser if it matches condition set by exclusionFunc</td>
 	</tr>
@@ -688,6 +692,38 @@ parsel.<span class="function-name">parse</span>(<span class="string">"if then en
     </ol>
 
 
+
+
+</dd>
+    <dt>
+    <a name = "Parsel.sepByAllowTrailing"></a>
+    <strong>Parsel.sepByAllowTrailing (p, delim)</strong>
+    </dt>
+    <dd>
+    Match parsers delimited by successful parse of delim, but allow a trailing delimiter
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">p</span>
+         the parser to match repeatedly
+        </li>
+        <li><span class="parameter">delim</span>
+         the parser to match as a delimiter
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        a parser function
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="index.html#Parsel.sepBy">Parsel.sepBy</a>
+    </ul>
 
 
 </dd>
