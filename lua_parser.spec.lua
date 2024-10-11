@@ -575,9 +575,11 @@ function TestTableBracketAccess()
     y[("access" .. "index")]
     z[1]["hello"]
     {}[2]
+    {}[2].name[3]
   ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 4)
+  lu.assertEquals(#tree, 5)
+  -- TODO: bring into assertType to check array
   for _, v in ipairs(tree) do
     assertType(v, "table_access_expression")
   end
@@ -589,7 +591,11 @@ function TestTableBracketAccess()
   assertNumber(tree[3].lhs.index, 1)
   assertString(tree[3].index, "hello")
   assertTableListValues(tree[4].lhs, {})
-  assertNumber(tree[4].index, 1)
+  assertNumber(tree[4].index, 2)
+  assertTableListValues(tree[5].lhs.lhs.lhs, {})
+  assertNumber(tree[5].lhs.lhs.index, 2)
+  assertString(tree[5].lhs.index, "name")
+  assertNumber(tree[5].index, 3)
 end
 
 os.exit(lu.LuaUnit.run())

@@ -60,12 +60,20 @@ local nameWithDots = p.map(p.sepBy(p.lazy(function() return Parsers.ident end), 
   end
   return table.concat(values, ".")
 end)
-local accessKeyParser = p.map(p.seq(p.literal("."), p.lazy(function() return Parsers.ident end)), function(seq)
+local dotAccessKeyParser = p.map(p.seq(p.literal("."), p.lazy(function() return Parsers.ident end)), function(seq)
   return {
     type = "string",
     value = seq[2].value
   }
 end)
+
+local bracketAccessKeyParser = p.map(p.seq(
+  p.literal("["),
+  ows,
+  p.lazy(function() return Parsers.expression end),
+  ows,
+  p.literal("]")
+), pick(3))
 local tableDictItemParser = p.map(p.seq(
   p.lazy(function() return Parsers.ident end),
   ows,
@@ -200,7 +208,7 @@ Parsers.infixExpression = p.map(
 -- handle left recursion for expression dot access chaining
 -- by greedily taking as many access as possible with oneOrMore
 Parsers.accessExpression = p.map(
-  p.seq(Parsers.baseExpression, p.oneOrMore(accessKeyParser)),
+  p.seq(Parsers.baseExpression, p.oneOrMore(p.either(bracketAccessKeyParser, dotAccessKeyParser))),
   function(seq)
     local lhs, rhs
     local lastLHS = seq[1]
