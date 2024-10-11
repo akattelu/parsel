@@ -576,7 +576,12 @@ Parsers.statement = p.any(
 )
 
 -- Program
-Parsers.program = p.oneOrMore(p.map(p.seq(ows, Parsers.statement, ows), pick(2)))
+Parsers.program = p.oneOrMore(
+  p.either(
+    p.map(p.seq(ows, Parsers.statement, ows), pick(2)),
+    lineComment
+  )
+)
 
 -- Parse string
 Parsers.parseString = function(s, parser)

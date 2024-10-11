@@ -768,10 +768,9 @@ function TestNumericalFor()
 end
 
 function TestMisc()
-  lu.skip("comment test")
-  -- TODO: fix
   local tree, err = p.parseProgramString([[
     -- test comment
+    -- test comment 2
   ]])
   lu.assertNil(err)
 end
