@@ -186,7 +186,8 @@ Parsers.notExpression = p.map(
 Parsers.infixExpression = p.map(
   p.exclude(p.seq(Parsers.baseExpression,
     ows,
-    p.anyLiteral("+", "-", "//", "*", "==", "~=", "^", "or", "and", "..", ">=", "<=", ">", "<", "%", "/"),
+    p.anyLiteral("<<", ">>", "&", "|", "+", "-", "//", "*", "==", "~=", "^", "or", "and", "..", ">=", "<=", ">", "<", "%",
+      "~", "/"),
     ows,
     Parsers.expression
   ), function(seq)

@@ -228,9 +228,14 @@ function TestInfix()
     2 >= 2
     2 % 3
     1 // 2
+    1&2
+    1|2
+    1~2
+    1>>2
+    1<<2
   ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 18)
+  lu.assertEquals(#tree, 23)
   for _, v in ipairs(tree) do
     assertType(v, "infix_expression")
   end
@@ -257,6 +262,11 @@ function TestInfix()
   assertInfixNumbers(tree[16], 2, ">=", 2)
   assertInfixNumbers(tree[17], 2, "%", 3)
   assertInfixNumbers(tree[18], 1, "//", 2)
+  assertInfixNumbers(tree[19], 1, "&", 2)
+  assertInfixNumbers(tree[20], 1, "|", 2)
+  assertInfixNumbers(tree[21], 1, "~", 2)
+  assertInfixNumbers(tree[22], 1, ">>", 2)
+  assertInfixNumbers(tree[23], 1, "<<", 2)
 end
 
 function TestIfThenStmt()
