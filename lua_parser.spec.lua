@@ -2,8 +2,6 @@
 local lu = require 'luaunit'
 local p = require 'lua_parser'
 
-
-
 local function assertType(tree, expected)
   if type(tree) == "table" then
     for _, v in ipairs(tree) do
@@ -91,7 +89,7 @@ local function assertTableDictValues(tree, items)
   for _, actual in pairs(tree.items) do
     assertType(actual, "table_item")
     lu.assertNotNil(actual.key)
-    local expected = items[actual.key]
+    local expected = items[actual.key.value]
     lu.assertEquals(actual.value.value, expected)
   end
 end
@@ -581,12 +579,22 @@ function TestTableDictLiterals()
       {}
       { a = 1 }
       { a = 1, b = 2, c = 3 }
+      { [a]=1, ["composite" .. "key"] = 2}
     ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 3)
+  lu.assertEquals(#tree, 4)
   assertTableDictValues(tree[1], {})
   assertTableDictValues(tree[2], { a = 1 })
-  assertTableDictValues(tree[3], { a = 1, b = 2, c = 3 })
+  assertString(tree[3].items[1].key, "a")
+  assertNumber(tree[3].items[1].value, 1)
+  assertString(tree[3].items[2].key, "b")
+  assertNumber(tree[3].items[2].value, 2)
+  assertString(tree[3].items[3].key, "c")
+  assertNumber(tree[3].items[3].value, 3)
+  assertIdentifier(tree[4].items[1].key, "a")
+  assertNumber(tree[4].items[1].value, 1)
+  assertInfixStrings(tree[4].items[2].key, "composite", "..", "key")
+  assertNumber(tree[4].items[2].value, 2)
 end
 
 function TestTableRecursive()

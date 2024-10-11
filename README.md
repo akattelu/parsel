@@ -76,6 +76,6 @@ Parsel.exclude (p, exclusionFunc) -- Fails a parser if it matches condition set 
 [x] generic for
 [x] numerical for
 [x] table literal with trailing comma
-[ ] table literal expression key syntax
+[x] table literal expression key syntax
 [x] single string param function calls require no parens
 [x] allow empty files with only line comments

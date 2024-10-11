@@ -69,7 +69,17 @@ local bracketAccessKeyParser = p.map(p.seq(
   p.literal("]")
 ), pick(3))
 local tableDictItemParser = p.map(p.seq(
-  p.lazy(function() return Parsers.ident end),
+  p.either(
+    p.map(p.lazy(function() return Parsers.ident end),
+      function(ident) return { type = "string", value = ident.value } end), -- use the raw string from the identifier
+    p.map(p.seq(
+      p.literal("["),
+      ows,
+      p.lazy(function() return Parsers.expression end),
+      ows,
+      p.literal("]")
+    ), pick(3))
+  ),
   ows,
   p.literal("="),
   ows,
@@ -78,7 +88,7 @@ local tableDictItemParser = p.map(p.seq(
   return {
     type = "table_item",
     value = seq[5],
-    key = seq[1].value -- use the raw string from the identifier
+    key = seq[1]
   }
 end)
 local tableListItemParser = p.map(p.lazy(function() return Parsers.expression end), function(expr)
