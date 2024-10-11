@@ -532,7 +532,6 @@ Parsers.returnStmt = p.map(
   end
 )
 
-
 Parsers.functionStmt = p.map(
   p.seq(
     p.optional(p.seq(p.literal('local'), ws))
@@ -599,4 +598,14 @@ Parsers.parseProgramString = function(s)
   return Parsers.parseString(s, Parsers.program)
 end
 
-return Parsers
+local M = {
+  parse = Parsers.parseProgramString,
+
+  -- TODO: clean up exposed API
+  parseString = Parsers.parseString,
+  parseProgramString = Parsers.parseProgramString,
+  ident = Parsers.ident,
+  returnStmt = Parsers.returnStmt
+}
+
+return M
