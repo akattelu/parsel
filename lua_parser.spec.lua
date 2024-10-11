@@ -3,7 +3,13 @@ local lu = require 'luaunit'
 local p = require 'lua_parser'
 
 local function assertType(tree, expected)
-  lu.assertEquals(tree.type, expected)
+  if type(tree) == "table" then
+    for _, v in ipairs(tree) do
+      assertType(v, expected)
+    end
+  else
+    lu.assertEquals(tree.type, expected)
+  end
 end
 
 local function assertIdentifier(tree, expected)
@@ -66,8 +72,8 @@ end
 local function assertTableListValues(tree, items)
   assertType(tree, "table_literal")
   lu.assertEquals(#tree.items, #items)
+  assertType(tree.items, "table_item")
   for i, v in ipairs(tree.items) do
-    assertType(v, "table_item")
     lu.assertEquals(v.key, i)
     lu.assertEquals(v.value.value, items[i])
   end
@@ -241,9 +247,7 @@ function TestInfix()
   ]])
   lu.assertNil(err)
   lu.assertEquals(#tree, 23)
-  for _, v in ipairs(tree) do
-    assertType(v, "infix_expression")
-  end
+  assertType(tree, "infix_expression")
   assertInfixNumbers(tree[1], 1, "+", 2)
   assertInfixNumbers(tree[2], 3, "-", 4)
   assertInfixNumbers(tree[3], 123, "*", 456)
@@ -449,8 +453,8 @@ function TestNamedFunction()
      ]])
   lu.assertNil(err)
   lu.assertEquals(#tree, 5)
+  assertType(tree, 'function')
   for _, v in ipairs(tree) do
-    assertType(v, 'function')
     lu.assertEquals(v.name, 'name')
     lu.assertEquals(v.scope, 'GLOBAL')
   end
@@ -579,10 +583,7 @@ function TestTableBracketAccess()
   ]])
   lu.assertNil(err)
   lu.assertEquals(#tree, 5)
-  -- TODO: bring into assertType to check array
-  for _, v in ipairs(tree) do
-    assertType(v, "table_access_expression")
-  end
+  assertType(tree, "table_access_expression")
   assertIdentifier(tree[1].lhs, "x")
   assertNumber(tree[1].index, 1)
   assertIdentifier(tree[2].lhs, "y")
