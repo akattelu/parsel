@@ -52,7 +52,7 @@ local ows = p.either(
   p.optionalWhitespace()
 )
 local block = p.zeroOrMore(p.map(p.seq(p.lazy(function() return Parsers.statement end), ows), pick(1)))
-local argParser = p.map(p.lazy(function() return Parsers.ident end), function(i) return i.value end)
+local paramParser = p.map(p.lazy(function() return Parsers.ident end), function(i) return i.value end)
 local nameWithDots = p.map(p.sepBy(p.lazy(function() return Parsers.ident end), p.literal(".")), function(seq)
   local values = {}
   for _, v in ipairs(seq) do
@@ -66,7 +66,6 @@ local dotAccessKeyParser = p.map(p.seq(p.literal("."), p.lazy(function() return 
     value = seq[2].value
   }
 end)
-
 local bracketAccessKeyParser = p.map(p.seq(
   p.literal("["),
   ows,
@@ -94,6 +93,26 @@ local tableListItemParser = p.map(p.lazy(function() return Parsers.expression en
     key = 0 -- fill this in later for numerical indices
   }
 end
+)
+local functionCallParser = p.map(
+  p.seq(
+  -- p.lazy(function() return Parsers.expression end),
+  -- ows,
+    p.literal("("),
+    ows,
+    p.optional(
+      p.sepBy(p.lazy(function() return Parsers.expression end), p.seq(p.literal(","), ows))
+    ),
+    ows,
+    p.literal(")")
+  )
+  , function(seq)
+    return {
+      type = "function_call_expression",
+      args = seq[3] == p.nullResult and {} or seq[3],
+      func = "" -- TODO: should be filled in by something else
+    }
+  end
 )
 
 
@@ -204,21 +223,24 @@ Parsers.infixExpression = p.map(
     return { type = "infix_expression", lhs = seq[1], op = seq[3], rhs = seq[5] }
   end)
 
-
 -- handle left recursion for expression dot access chaining
 -- by greedily taking as many access as possible with oneOrMore
 Parsers.accessExpression = p.map(
-  p.seq(Parsers.baseExpression, p.oneOrMore(p.either(bracketAccessKeyParser, dotAccessKeyParser))),
+  p.seq(Parsers.baseExpression, p.oneOrMore(p.any(functionCallParser, bracketAccessKeyParser, dotAccessKeyParser))),
   function(seq)
-    local lhs, rhs
+    local lhs
     local lastLHS = seq[1]
     for _, v in ipairs(seq[2]) do
-      rhs = v
-      lhs = {
-        type = "table_access_expression",
-        lhs = lastLHS,
-        index = rhs
-      }
+      if v.type == "function_call_expression" then
+        lhs = v
+        lhs.func = lastLHS
+      else
+        lhs = {
+          type = "table_access_expression",
+          lhs = lastLHS,
+          index = v
+        }
+      end
       lastLHS = lhs
     end
     return lhs
@@ -232,7 +254,7 @@ Parsers.functionExpression = p.map(
     , p.any(
       p.map(p.literal("()"), function(_) return {} end),
       p.map(p.literal("(...)"), function(_) return { "..." } end),
-      p.map(p.seq(p.literal("("), p.sepBy(argParser, p.seq(p.literal(','), ows)), p.literal(")")),
+      p.map(p.seq(p.literal("("), p.sepBy(paramParser, p.seq(p.literal(','), ows)), p.literal(")")),
         pick(2))
     )
     , ows
@@ -243,7 +265,7 @@ Parsers.functionExpression = p.map(
     return {
       type = "function",
       name = nil,
-      args = seq[3],
+      params = seq[3],
       block = seq[5]
     }
   end)
@@ -428,7 +450,7 @@ Parsers.functionStmt = p.map(
     , p.any(
       p.map(p.literal("()"), function(_) return {} end),
       p.map(p.literal("(...)"), function(_) return { "..." } end),
-      p.map(p.seq(p.literal("("), p.sepBy(argParser, p.seq(p.literal(','), ows)), p.literal(")")),
+      p.map(p.seq(p.literal("("), p.sepBy(paramParser, p.seq(p.literal(','), ows)), p.literal(")")),
         pick(2)))
     , ows
     , block
@@ -438,7 +460,7 @@ Parsers.functionStmt = p.map(
     return {
       type = "function",
       name = seq[4],
-      args = seq[6],
+      params = seq[6],
       block = seq[8],
       scope = seq[1] == p.nullResult and "GLOBAL" or "LOCAL"
     }

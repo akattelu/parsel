@@ -429,10 +429,10 @@ function TestAnonFunctions()
     lu.assertNil(v.value.name)
   end
 
-  lu.assertEquals(tree[1].value.args, {})
-  lu.assertEquals(tree[2].value.args, { "arg1" })
-  lu.assertEquals(tree[3].value.args, { "arg1", "arg2", "arg3" })
-  lu.assertEquals(tree[4].value.args, { "..." })
+  lu.assertEquals(tree[1].value.params, {})
+  lu.assertEquals(tree[2].value.params, { "arg1" })
+  lu.assertEquals(tree[3].value.params, { "arg1", "arg2", "arg3" })
+  lu.assertEquals(tree[4].value.params, { "..." })
 end
 
 function TestNamedFunction()
@@ -459,23 +459,23 @@ function TestNamedFunction()
     lu.assertEquals(v.scope, 'GLOBAL')
   end
 
-  lu.assertEquals(tree[1].args, { "arg1" })
+  lu.assertEquals(tree[1].params, { "arg1" })
   lu.assertEquals(tree[1].block, {})
 
-  lu.assertEquals(tree[2].args, {})
+  lu.assertEquals(tree[2].params, {})
   assertAssignmentNumber(tree[2].block[1], "x", 1)
   assertAssignmentNumber(tree[2].block[2], "y", 1)
   assertType(tree[2].block[3], "return")
   assertInfixNumbers(tree[2].block[3].value, 1, "+", 2)
 
   lu.assertEquals(tree[3].block, {})
-  lu.assertEquals(tree[3].args, {})
+  lu.assertEquals(tree[3].params, {})
 
   lu.assertEquals(tree[4].block, {})
-  lu.assertEquals(tree[4].args, { "arg1", "arg2", "arg3" })
+  lu.assertEquals(tree[4].params, { "arg1", "arg2", "arg3" })
 
   lu.assertEquals(tree[5].block, {})
-  lu.assertEquals(tree[5].args, { "..." })
+  lu.assertEquals(tree[5].params, { "..." })
 end
 
 function TestFunctionNameWithDots()
@@ -484,7 +484,7 @@ function TestFunctionNameWithDots()
   lu.assertEquals(#tree, 1)
   assertType(tree[1], 'function')
   lu.assertEquals(tree[1].name, 'name.with.dots')
-  lu.assertEquals(tree[1].args, { "arg1" })
+  lu.assertEquals(tree[1].params, { "arg1" })
   lu.assertEquals(tree[1].block, {})
 end
 
@@ -494,7 +494,7 @@ function TestLocalFunction()
   lu.assertEquals(#tree, 1)
   assertType(tree[1], 'function')
   lu.assertEquals(tree[1].name, 'name')
-  lu.assertEquals(tree[1].args, { "arg1" })
+  lu.assertEquals(tree[1].params, { "arg1" })
   lu.assertEquals(tree[1].block, {})
   lu.assertEquals(tree[1].scope, "LOCAL")
 end
@@ -597,6 +597,43 @@ function TestTableBracketAccess()
   assertNumber(tree[5].lhs.lhs.index, 2)
   assertString(tree[5].lhs.index, "name")
   assertNumber(tree[5].index, 3)
+end
+
+function TestFunctionCall()
+  local tree, err = p.parseProgramString([[
+    x()
+    x().y()
+    x[1]()
+    x(a)
+    x(a, b, c)
+    (function() end)()
+  ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 6)
+  assertType(tree, "function_call_expression")
+
+  assertIdentifier(tree[1].func, "x")
+  lu.assertEquals(tree[1].args, {})
+
+  assertIdentifier(tree[2].func.lhs.func, "x")
+  lu.assertEquals(tree[2].func.lhs.args, {})
+  assertString(tree[2].func.index, "y")
+  lu.assertEquals(tree[2].args, {})
+
+  assertIdentifier(tree[3].func.lhs, "x")
+  assertNumber(tree[3].func.index, 1)
+  lu.assertEquals(tree[3].args, {})
+
+  assertIdentifier(tree[4].func, "x")
+  assertIdentifier(tree[4].args[1], "a")
+
+  assertIdentifier(tree[5].func, "x")
+  assertIdentifier(tree[5].args[1], "a")
+  assertIdentifier(tree[5].args[2], "b")
+  assertIdentifier(tree[5].args[3], "c")
+
+  assertType(tree[6].func, "function")
+  lu.assertEquals(tree[6].args, {})
 end
 
 os.exit(lu.LuaUnit.run())
