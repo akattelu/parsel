@@ -97,6 +97,14 @@ end
 function TestIdent()
   local _, err = p.parseString("if", p.ident)
   lu.assertStrContains(err, "ignore condition was true after parsing")
+
+  local tree
+  tree, err = p.parseString("...", p.ident)
+  assertIdentifier(tree, "...")
+  lu.assertNil(err)
+  tree, err = p.parseString("_", p.ident)
+  assertIdentifier(tree, "_")
+  lu.assertNil(err)
 end
 
 function TestDeclaration()

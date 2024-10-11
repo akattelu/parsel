@@ -137,10 +137,17 @@ local methodCallParser = p.map(
 
 
 -- Primitives
-Parsers.ident = p.exclude(p.map(p.seq(p.letter(), p.zeroOrMore(p.any(p.letter(), p.digit(), p.literal("_")))),
-  function(tokens) return { type = "identifier", value = tokens[1] .. table.concat(tokens[2], "") } end), function(n)
-  return isKeyword(n.value)
-end)
+Parsers.ident = p.exclude(
+  p.any(
+    p.map(
+      p.seq(p.letter(), p.zeroOrMore(p.any(p.letter(), p.digit(), p.literal("_")))),
+      function(tokens) return { type = "identifier", value = tokens[1] .. table.concat(tokens[2], "") } end),
+    p.map(p.literal('...'), function(_) return { type = "identifier", value = "..." } end),
+    p.map(p.literal("_"), function(_) return { type = "identifier", value = "_" } end)
+  ),
+  function(n)
+    return isKeyword(n.value)
+  end)
 Parsers.int = p.map(p.oneOrMore(p.digit()),
   function(digList) return { type = "number", value = tonumber(table.concat(digList, "")) } end)
 Parsers.float = p.map(p.seq(Parsers.int, p.literal("."), Parsers.int),
