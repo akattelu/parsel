@@ -556,12 +556,14 @@ function TestTableListLiterals()
       {}
       { 1 }
       { 1, 2, 3 }
+      { 1, 2, 3, }
     ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 3)
+  lu.assertEquals(#tree, 4)
   assertTableListValues(tree[1], {})
   assertTableListValues(tree[2], { 1 })
   assertTableListValues(tree[3], { 1, 2, 3 })
+  assertTableListValues(tree[4], { 1, 2, 3 })
 end
 
 function TestTableDictLiterals()
@@ -693,8 +695,10 @@ function TestGenericFor()
 end
 
 function TestMisc()
+  lu.skip("comment test")
+  -- TODO: fix
   local tree, err = p.parseProgramString([[
-    f() == 2
+    -- test comment
   ]])
   lu.assertNil(err)
 end

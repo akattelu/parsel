@@ -173,8 +173,8 @@ Parsers.tableLiteral = p.map(
     ows,
     p.optional(
       p.either(
-        p.sepBy(tableDictItemParser, p.seq(p.literal(','), ows))
-        , p.map(p.sepBy(tableListItemParser, p.seq(p.literal(','), ows)), function(itemList)
+        p.sepByAllowTrailing(tableDictItemParser, p.seq(p.literal(','), ows))
+        , p.map(p.sepByAllowTrailing(tableListItemParser, p.seq(p.literal(','), ows)), function(itemList)
           for i, v in ipairs(itemList) do
             v.key = i -- assign raw numerical index
           end

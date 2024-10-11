@@ -80,33 +80,33 @@ local function insertToken(t, result)
   end
 end
 
--- Parser = {
---   new = function(input, pos, error)
---     return {
---       input = input,
---       pos = pos or 1,
---       error = error or nil,
---       advance = function(self, amt)
---         return Parser.new(self.input, self.pos + amt, self.error)
---       end,
---       withError = function(self, err)
---         return Parser.new(self.input, self.pos, err)
---       end,
---       run = function(self, parser)
---         return parser(self)
---       end,
---       print = function(self)
---         print(string.format("Parser { input: %s, pos: %d, error: %s }", self.input, self.pos, self.error))
---       end,
---       succeeded = function(self)
---         return not self.error
---       end,
---       inBounds = function(self)
---         return self.pos <= #self.input
---       end
---     }
---   end,
--- }
+Parser = {
+  new = function(input, pos, error)
+    return {
+      input = input,
+      pos = pos or 1,
+      error = error or nil,
+      advance = function(self, amt)
+        return Parser.new(self.input, self.pos + amt, self.error)
+      end,
+      withError = function(self, err)
+        return Parser.new(self.input, self.pos, err)
+      end,
+      run = function(self, parser)
+        return parser(self)
+      end,
+      print = function(self)
+        print(string.format("Parser { input: %s, pos: %d, error: %s }", self.input, self.pos, self.error))
+      end,
+      succeeded = function(self)
+        return not self.error
+      end,
+      inBounds = function(self)
+        return self.pos <= #self.input
+      end
+    }
+  end,
+}
 
 --- Entry point to parsing a string
 -- @param input the string to match
