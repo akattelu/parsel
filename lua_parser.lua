@@ -202,9 +202,9 @@ Parsers.parenthesizedExpression = p.map(
     p.lazy(function() return Parsers.expression end),
     p.literal(")")
   ), pick(2))
-Parsers.baseExpression = p.any(Parsers.primitiveExpression, Parsers.parenthesizedExpression)
+Parsers.baseExpression = p.any(p.lazy(function() return Parsers.accessExpression end), Parsers.primitiveExpression,
+  Parsers.parenthesizedExpression)
 Parsers.expression = p.any(
-  p.lazy(function() return Parsers.accessExpression end),
   p.lazy(function() return Parsers.functionExpression end),
   p.lazy(function() return Parsers.infixExpression end),
   p.lazy(function() return Parsers.notExpression end),
@@ -246,7 +246,7 @@ Parsers.infixExpression = p.map(
 -- handle left recursion for expression dot access chaining
 -- by greedily taking as many access as possible with oneOrMore
 Parsers.accessExpression = p.map(
-  p.seq(Parsers.baseExpression,
+  p.seq(p.any(Parsers.primitiveExpression, Parsers.parenthesizedExpression),
     p.oneOrMore(p.any(methodCallParser, functionCallParser, bracketAccessKeyParser, dotAccessKeyParser))),
   function(seq)
     local lhs

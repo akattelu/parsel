@@ -660,9 +660,8 @@ end
 
 function TestMisc()
   local tree, err = p.parseProgramString([[
-    local printTable_cache = {}
+    f() == 2
   ]])
-  p.dlog(tree)
   lu.assertNil(err)
 end
 
@@ -674,7 +673,7 @@ function TestParseVeryBigProgram()
     contents = file:read("*a")
   end
   local tree, err = p.parseProgramString(contents)
-  p.dlog(tree)
+  -- p.dlog(tree)
   lu.assertNil(err)
 end
 
