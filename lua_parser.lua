@@ -391,6 +391,32 @@ Parsers.whileStmt = p.map(
     }
   end)
 
+Parsers.genericForStmt = p.map(
+  p.seq(
+    p.literal("for"),
+    ws,
+    p.sepBy(Parsers.ident, p.seq(p.literal(","), ows)),
+    ws,
+    p.literal("in"),
+    ws,
+    Parsers.expression,
+    ws,
+    p.literal("do"),
+    ws,
+    block,
+    ows,
+    p.literal("end")
+  )
+  , function(seq)
+    return {
+      type = "generic_for",
+      listExpression = seq[7],
+      loopVariables = seq[3],
+      block = seq[11]
+    }
+  end
+)
+
 Parsers.repeatStmt = p.map(
   p.seq(
     p.literal("repeat"),
@@ -498,6 +524,7 @@ Parsers.statement = p.any(
   , Parsers.switchStmt
   , Parsers.ifStmt
   , Parsers.whileStmt
+  , Parsers.genericForStmt
   , Parsers.repeatStmt
   , Parsers.returnStmt
   , Parsers.functionStmt

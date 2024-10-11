@@ -72,3 +72,5 @@ Parsel.exclude (p, exclusionFunc) -- Fails a parser if it matches condition set 
 [x] and/or infix
 [x] single quote strings
 [x] local functions
+[x] generic for
+[ ] numerical for

@@ -244,9 +244,10 @@ function TestInfix()
     1~2
     1>>2
     1<<2
+    f() == 2
   ]])
   lu.assertNil(err)
-  lu.assertEquals(#tree, 23)
+  lu.assertEquals(#tree, 24)
   assertType(tree, "infix_expression")
   assertInfixNumbers(tree[1], 1, "+", 2)
   assertInfixNumbers(tree[2], 3, "-", 4)
@@ -276,6 +277,8 @@ function TestInfix()
   assertInfixNumbers(tree[21], 1, "~", 2)
   assertInfixNumbers(tree[22], 1, ">>", 2)
   assertInfixNumbers(tree[23], 1, "<<", 2)
+  assertIdentifier(tree[24].lhs.func, "f")
+  assertNumber(tree[24].rhs, 2)
 end
 
 function TestIfThenStmt()
@@ -658,6 +661,24 @@ function TestFunctionCall()
   lu.assertEquals(tree[2].args, {})
 end
 
+function TestGenericFor()
+  local tree, err = p.parseProgramString([[
+    for k, v in ipairs(list) do
+      print(k,v)
+    end
+  ]])
+  lu.assertNil(err)
+  lu.assertEquals(#tree, 1)
+  assertType(tree[1], "generic_for")
+  assertIdentifier(tree[1].loopVariables[1], "k")
+  assertIdentifier(tree[1].loopVariables[2], "v")
+  assertIdentifier(tree[1].listExpression.func, "ipairs")
+  assertIdentifier(tree[1].listExpression.args[1], "list")
+  assertIdentifier(tree[1].block[1].func, "print")
+  assertIdentifier(tree[1].block[1].args[1], "k")
+  assertIdentifier(tree[1].block[1].args[2], "v")
+end
+
 function TestMisc()
   local tree, err = p.parseProgramString([[
     f() == 2
@@ -666,12 +687,12 @@ function TestMisc()
 end
 
 function TestParseVeryBigProgram()
-  lu.skip("skipped")
   local file = io.open("testdata/scratch.lua", "r")
   local contents
   if file then
     contents = file:read("*a")
   end
+  -- lu.skip("skipped")
   local tree, err = p.parseProgramString(contents)
   -- p.dlog(tree)
   lu.assertNil(err)
