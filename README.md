@@ -2,6 +2,9 @@
 
 A parser combinator library for Lua 
 
+<img src="https://github.com/user-attachments/assets/ac5df3ee-eabc-406c-a494-7c4f89b9b1aa" width=400 height=400>
+
+
 <!--toc:start-->
 - [Parsel](#parsel)
   - [Usage](#usage)
