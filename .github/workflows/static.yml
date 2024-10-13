@@ -31,6 +31,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - uses: leafo/gh-actions-lua@v9
+      - uses: leafo/gh-actions-luarocks@v4
+      - name: Install luaunit
+        run: luarocks install luaunit
+      - name: Generate doc
+        run: ldoc --date "" parsel.lua
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

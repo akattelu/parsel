@@ -35,7 +35,9 @@ jobs:
 
       - name: Run luast parser test
         run: |
+          lua parsel.spec.lua --output tap
           pushd luast/
+          lua lua_parser.spec.lua --output tap
           lua lua_parser.spec.lua --output tap > luast-spec-output.tap
           popd
 
