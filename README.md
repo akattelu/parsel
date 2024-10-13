@@ -7,6 +7,7 @@ A parser combinator library for Lua
   - [Usage](#usage)
   - [Available Parsers](#available-parsers)
   - [Available combinators](#available-combinators)
+  - [Parsing Lua source code](#parsing-lua-source-code)
 <!--toc:end-->
 
 ## Usage
