@@ -54,3 +54,31 @@ Parsel.sepBy (p, delim) -- Match parsers delimited by successful parse of delim
 Parsel.sepByAllowTrailing (p, delim) -- Like sepBy, but allow one trailing delim
 Parsel.exclude (p, exclusionFunc) -- Fails a parser if it matches condition set by exclusionFunc
 ```
+
+## Parsing Lua source code
+
+Parsel also comes with a lua parser under the `luast/` directory
+```lua
+local p = require 'lua_parser'
+local tree, err = p.parse([[local foo = "bar"]])
+if err then
+  print(err)
+end
+p.print(tree)
+--[[
+{
+ 1: {
+   "type": "assignment"
+   "value": {
+     "type": "string"
+     "value": "bar"
+   }
+   "ident": {
+     "type": "identifier"
+     "value": "foo"
+   }
+   "scope": "LOCAL"
+ }
+}
+]]
+```
