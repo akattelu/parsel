@@ -1,14 +1,13 @@
 # Parsel
 
+A parser combinator library for Lua 
+
 <!--toc:start-->
 - [Parsel](#parsel)
   - [Usage](#usage)
   - [Available Parsers](#available-parsers)
   - [Available combinators](#available-combinators)
-  - [TODO](#todo)
 <!--toc:end-->
-
-A parser combinator library for Lua 
 
 ## Usage
 
@@ -55,27 +54,3 @@ Parsel.sepBy (p, delim) -- Match parsers delimited by successful parse of delim
 Parsel.sepByAllowTrailing (p, delim) -- Like sepBy, but allow one trailing delim
 Parsel.exclude (p, exclusionFunc) -- Fails a parser if it matches condition set by exclusionFunc
 ```
-
-## TODO
-[x] elseif 
-[x] else 
-[x] table literals
-[x] access operation with dot
-[x] access operation with brackets
-[x] function calls
-[x] method access syntax
-[x] table assignment
-[x] bit and misc operators
-[x] comments
-[x] comparison operators
-[x] concat operator
-[x] blockstrings
-[x] and/or infix
-[x] single quote strings
-[x] local functions
-[x] generic for
-[x] numerical for
-[x] table literal with trailing comma
-[x] table literal expression key syntax
-[x] single string param function calls require no parens
-[x] allow empty files with only line comments
