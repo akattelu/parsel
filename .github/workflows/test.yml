@@ -32,18 +32,18 @@ jobs:
 
       - name: Run parsel test
         run: |
-          lua parsel.spec.lua -v
-          lua parsel.spec.lua --output tap > parsel-spec-output.tap
+          lua parsel.spec.lua --output junit --name parsel.spec.xml
 
       - name: Run luast parser test
         run: |
           pushd luast/
-          lua lua_parser.spec.lua -v
-          lua lua_parser.spec.lua --output tap > luast-spec-output.tap
+          lua lua_parser.spec.lua --output junit --name luast.spec.xml
           popd
 
       - name: Test Summary
         uses: test-summary/action@v2
         with:
-          paths: parsel-spec-output.tap
+          paths: |
+            ./parsel.spec.xml
+            luast/luast.spec.xml
         if: always()
