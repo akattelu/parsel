@@ -31,20 +31,19 @@ jobs:
         run: luarocks install luaunit
 
       - name: Run parsel test
-        run: lua parsel.spec.lua --output tap > parsel-spec-output.tap
+        run: |
+          lua parsel.spec.lua -v
+          lua parsel.spec.lua --output tap > parsel-spec-output.tap
 
       - name: Run luast parser test
         run: |
-          lua parsel.spec.lua --output tap
           pushd luast/
-          lua lua_parser.spec.lua --output tap
+          lua lua_parser.spec.lua -v
           lua lua_parser.spec.lua --output tap > luast-spec-output.tap
           popd
 
       - name: Test Summary
         uses: test-summary/action@v2
         with:
-          paths: |
-            parsel-spec-output.tap
-            luast/luast-spec-output.tap
+          paths: parsel-spec-output.tap
         if: always()
